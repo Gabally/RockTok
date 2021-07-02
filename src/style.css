@@ -1,0 +1,76 @@
+* {
+    border: 0px;
+    outline: none;
+    font-family: EarlyGameboy;
+}
+
+body {
+    background-color: rgb(0, 0, 0);
+}
+
+.aCenter {
+    position: absolute;
+    top: 40%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+#menu {
+    justify-content: center;
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+}
+
+#app {
+    font-family: Avenir, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-align: center;
+    color: #2c3e50;
+}
+
+.m-btn {
+    color: rgb(243, 239, 239);
+    background-color: transparent;
+    cursor: pointer;
+    font-size: 27px;
+    margin-top: 50px;
+}
+
+.m-btn:hover {
+    color: rgb(131, 131, 130);
+}
+
+.title {
+    font-size: 70px;
+}
+
+#rock {
+    color: rgb(170, 136, 73);
+}
+
+#tok {
+    color: rgb(23, 112, 23);
+}
+
+#worldSelector {
+    color: white;
+    border: 8px solid rgb(128, 92, 45);
+    width: 70vw;
+    height: 50vh;
+    font-size: 27px;
+}
+
+.WorldBtn {
+    margin-top: 10px;
+    margin-bottom: 10px;
+    margin-right: 20px;
+    margin-left: 20px;
+}
+
+#newWorldBtnContainer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
