@@ -1,4 +1,4 @@
-var keyValueIDB = {
+export class keyValueIDB {
 	async init(): Promise<void> {
 		return new Promise((resolve, reject) => {
 			let idbCmp = window.indexedDB;
@@ -16,7 +16,7 @@ var keyValueIDB = {
 				resolve();
 			}
 		});
-	},
+	}
 
 	async getValue(key: string): Promise<any> {
 		return new Promise((resolve, reject) => {
@@ -37,7 +37,7 @@ var keyValueIDB = {
 				reject(oRequest.error);
 			}
 		})
-	},
+	}
 
 	async setValue(key: string, value: any): Promise<void>  {
 		return new Promise((resolve, reject) => {
@@ -60,5 +60,3 @@ var keyValueIDB = {
 		})
 	}
 }
-
-export default keyValueIDB

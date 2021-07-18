@@ -46,6 +46,5 @@ export class keyboardManager {
             this.callbacks[keyCode] = [];
         }
         this.callbacks[keyCode].push(cb);
-        console.log(this.callbacks);
     }
 }

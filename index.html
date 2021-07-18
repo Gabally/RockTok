@@ -3,48 +3,78 @@
 
 <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2265%22>⛏️</text></svg>">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>RockTok</title>
+    <title>RockTok&nbsp;&nbsp;🪓</title>
 </head>
 
 <body>
     <div id="app" class="aCenter">
-        <div id="menu" style="display: none;">
+        <div id="menu">
             <div>
                 <span id="rock" class="title">
-              Rock
-              </span>
+          Rock
+        </span>
                 <span id="tok" class="title">
-              Tok
-              </span>
+          Tok
+        </span>
             </div>
-            <button class="m-btn" id="startSingleplayer">
-              Singleplayer
-            </button>
-            <button class="m-btn">
-              Multiplayer
-            </button>
+            <div>
+                <button class="m-btn" id="startSingleplayer">
+          Singleplayer
+        </button>
+            </div>
+            <div>
+                <button class="m-btn">
+          Multiplayer
+        </button>
+            </div>
         </div>
         <div id="worldSelector" class="aCenter">
             <div>Select a World:</div>
             <div id="newWorldBtnContainer">
-                <button class="m-btn WorldBtn" id="newWorldBtn">Back</button>
-                <button class="m-btn WorldBtn">New</button>
+                <button class="m-btn WorldBtn" id="backBtn">Back</button>
+                <button class="m-btn WorldBtn" id="newWorldBtn">New</button>
             </div>
-            <div>
-                <div>
-                    Gabally's world
-                </div>
-                <div>
-                    Nonno Siper
-                </div>
+            <div id="worlds">
             </div>
         </div>
-        <div id="game" style="display: none;">
+        <div id="inventory" style="display: none;">
+            <div id="item-container">
+                <div class="item-slot"></div>
+                <div class="item-slot"></div>
+                <div class="item-slot"></div>
+                <div class="item-slot"></div>
+                <div class="item-slot"></div>
+                <div class="item-slot"></div>
+                <div class="item-slot"></div>
+                <div class="item-slot"></div>
+                <div class="item-slot"></div>
+                <div class="item-slot"></div>
+                <div class="item-slot"></div>
+                <div class="item-slot"></div>
+            </div>
+        </div>
+        <div id="game">
             <canvas id="screen">
-          Your browser does not support the canvas element, the game cannot run.
-          </canvas>
+        Your browser does not support the canvas element, the game cannot run.
+      </canvas>
+            <div id="game-ui">
+                <div>
+                    <div>Selected:</div>
+                    <img src="/assets/example.png" id="selectedItem" width="64" height="64" alt="">
+                </div>
+                <div>
+                    <div>
+                        <img src="/assets/hearth.png" alt="" width="64" height="64">
+                        <span>:</span><span>100</span>
+                    </div>
+                </div>
+                <div>
+                    <img src="/assets/clock.png" alt="" width="64" height="64">
+                    <span>h</span><span>14:00</span>
+                </div>
+            </div>
         </div>
     </div>
     <script type="module" src="/src/main.ts"></script>

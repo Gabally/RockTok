@@ -12,7 +12,7 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noImplicitReturns": true,
-    "strictNullChecks":false
+    "strictNullChecks": false
   },
   "include": ["./src"]
 }
