@@ -1,5 +1,7 @@
 import { MAP_HEIGHT, MAP_WIDTH, TILE_DIMENSION } from "./constants";
 import { point } from "./Game";
+import { randomNumber } from "./utils";
+import { PerlinNoise } from "./PerlinNoise";
 
 export interface chest {
     pos: point,
@@ -51,12 +53,6 @@ export interface world {
     playerHP: number
 }
 
-const randomNumber = (min: number, max: number): number => {
-    min = Math.ceil(min);
-    max = Math.floor(max);
-    return Math.floor(Math.random() * (max - min)) + min;
-};
-
 const getRandomCoordinate = (): point => {
     return {
         x: randomNumber(0, MAP_WIDTH * TILE_DIMENSION),
@@ -87,20 +83,19 @@ export const generateWorld = async (): Promise<world> => {
                 });
             }
         }
+        let noiseGenerator = new PerlinNoise();
         newWorld.map = new Array(MAP_WIDTH);
-        let noise = 0;
         for (let i = 0; i < newWorld.map.length; i++) {
-            if (noise <= 0 && randomNumber(0, 5) === 4) {
-                console.log("noise added");
-                noise = 10;
-            }
-            noise -= 0.5;
             newWorld.map[i] = new Array(MAP_HEIGHT);
             for (let j = 0; j < MAP_HEIGHT; j++) {
-                if (noise > 0) {
-                    newWorld.map[i][j] = 3;
+                let terrainType = noiseGenerator.get(i, j);
+                console.log(terrainType);
+                if (terrainType === -0) {
+                    newWorld.map[i][j] = randomNumber(1, 4);
+                } else if (terrainType === 0) {
+                    newWorld.map[i][j] = 5;
                 } else {
-                    newWorld.map[i][j] = randomNumber(1, 3);
+                    newWorld.map[i][j] = 6;
                 }
                 if (randomNumber(0, 25) === 4) {
                     newWorld.rocks.push({
@@ -111,7 +106,6 @@ export const generateWorld = async (): Promise<world> => {
                         hp: 100
                     });
                 }
-                noise -= 0.5;
             }
         }
         resolve(newWorld);

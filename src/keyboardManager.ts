@@ -1,4 +1,4 @@
-export class keyboardManager {
+export class KeyboardManager {
 
     pressedKeys: string[];
     callbacks: Record<string, (() => void)[]> = {};

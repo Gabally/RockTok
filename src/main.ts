@@ -2,10 +2,10 @@ import "./style.css";
 import "../assets/EarlyGameboyFont.css";
 import { Game } from "./Game";
 import { generateWorld, worldInterface } from "./WorldInterface";
-import { keyValueIDB } from "./keyValueIDB";
+import { KeyValueIDB } from "./KeyValueIDB";
 
 var game: Game;
-var db = new keyValueIDB();
+var db = new KeyValueIDB();
 
 const uiElements: Record<string, string> = {
     mainMenu: "menu",
@@ -154,7 +154,7 @@ const updateWorldList = async (): Promise<void> => {
         img.className = "deleteButton";
         img.addEventListener("click", async(e: Event): Promise<void> => {
             e.stopPropagation();
-            if (await showConfirmDialog("Are you sure that you want to delete the world " + key + " ?")){
+            if (await showConfirmDialog(`Are you sure that you want to delete the world ${key} ?`)){
                 let worlds = await db.getValue("worlds");
                 delete worlds[key];
                 await db.setValue("worlds", worlds);

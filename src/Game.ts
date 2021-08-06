@@ -1,4 +1,4 @@
-import { keyboardManager } from "./keyboardManager";
+import { KeyboardManager } from "./KeyboardManager";
 import { Player } from "./Player";
 import { worldInterface } from "./WorldInterface";
 import { loadImage, loadTiles } from "./utils";
@@ -20,7 +20,7 @@ export enum direction {
 export class Game {
   canvas: HTMLCanvasElement;
   ratio = 16 / 9;
-  keyboard: keyboardManager;
+  keyboard: KeyboardManager;
   player: Player;
   ctx: CanvasRenderingContext2D;
   playerDirection = direction.None;
@@ -40,7 +40,7 @@ export class Game {
     this.canvas.style.imageRendering = "pixelated";
     window.addEventListener("resize", () => this.resizeCanvas());
     this.resizeCanvas();
-    this.keyboard = new keyboardManager();
+    this.keyboard = new KeyboardManager();
     this.player = new Player(this.canvas.width / 2, this.canvas.height / 2);
   }
 

@@ -1,4 +1,4 @@
-export class keyValueIDB {
+export class KeyValueIDB {
 	async init(): Promise<void> {
 		return new Promise((resolve, reject) => {
 			let idbCmp = window.indexedDB;
