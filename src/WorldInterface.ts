@@ -1,6 +1,6 @@
-import { MAP_HEIGHT, MAP_WIDTH, TILE_DIMENSION } from "./constants";
+import { MAP_HEIGHT, MAP_WIDTH, TILE_DIMENSION, MAP_GENERATION_SCALE } from "./constants";
 import { point } from "./Game";
-import { randomNumber } from "./utils";
+import { randomNumber, scaleArray } from "./utils";
 import { PerlinNoise } from "./PerlinNoise";
 
 export interface chest {
@@ -83,21 +83,32 @@ export const generateWorld = async (): Promise<world> => {
                 });
             }
         }
+        let cnv = document.createElement("canvas");
+        cnv.width = MAP_WIDTH/MAP_GENERATION_SCALE;
+        cnv.height = MAP_HEIGHT/MAP_GENERATION_SCALE;
+        let tmpctx = cnv.getContext("2d");
         let noiseGenerator = new PerlinNoise();
-        newWorld.map = new Array(MAP_WIDTH);
-        for (let i = 0; i < newWorld.map.length; i++) {
-            newWorld.map[i] = new Array(MAP_HEIGHT);
-            for (let j = 0; j < MAP_HEIGHT; j++) {
-                let terrainType = noiseGenerator.get(i, j);
-                console.log(terrainType);
-                if (terrainType === -0) {
-                    newWorld.map[i][j] = randomNumber(1, 4);
-                } else if (terrainType === 0) {
-                    newWorld.map[i][j] = 5;
+        let smallMap = new Array(MAP_WIDTH/MAP_GENERATION_SCALE);
+        for (let i = 0; i < smallMap.length; i++) {
+            smallMap[i] = new Array(MAP_HEIGHT/MAP_GENERATION_SCALE);
+            for (let j = 0; j < MAP_HEIGHT/MAP_GENERATION_SCALE; j++) {
+                let noise = noiseGenerator.noise(i, j);
+                //Makes the noise value between 0 and 1
+                let terrainType = (noise + 1) / 2;
+                if (terrainType < 0.3) {
+                    smallMap[i][j] = 9;
+                    tmpctx.fillStyle = "blue";
+                    tmpctx.fillRect(i,j,1,1);
+                } else if (terrainType < 0.7) {
+                    smallMap[i][j] = 1;
+                    tmpctx.fillStyle = "green";
+                    tmpctx.fillRect(i,j,1,1);                    
                 } else {
-                    newWorld.map[i][j] = 6;
+                    smallMap[i][j] = 6;
+                    tmpctx.fillStyle = "yellow";
+                    tmpctx.fillRect(i,j,1,1);
                 }
-                if (randomNumber(0, 25) === 4) {
+                if (randomNumber(0, 50) === 4) {
                     newWorld.rocks.push({
                         pos: {
                             x: i,
@@ -105,6 +116,46 @@ export const generateWorld = async (): Promise<world> => {
                         },
                         hp: 100
                     });
+                }
+            }
+        }
+        let image = new Image();
+        image.src = cnv.toDataURL("image/png");
+        image.width = cnv.width*MAP_GENERATION_SCALE;
+        image.height = cnv.height*MAP_GENERATION_SCALE;
+        image.style.imageRendering = "pixelated";
+        let w = window.open("https://gabally.net", 'map','width=700,height=500');
+        w.document.write(image.outerHTML);
+        w.focus();
+        let scaledMap = scaleArray(smallMap, MAP_GENERATION_SCALE);
+        newWorld.map = new Array(scaledMap.length);
+        for(let i = 0; i < scaledMap.length; i++) {
+            newWorld.map[i] = new Array(scaledMap[i].length);
+            for(let j = 0; j < scaledMap[i].length; j++) {
+                if (scaledMap[i][j] == 1) {
+                    let choice = randomNumber(1, 100);
+                    if (choice < 80) {
+                        newWorld.map[i][j] = 1;
+                    } else if (choice < 85) {
+                        newWorld.map[i][j] = 2;
+                    } else if (choice < 90) {
+                        newWorld.map[i][j] = 3;
+                    } else if (choice < 95) {
+                        newWorld.map[i][j] = 4;
+                    } else {
+                        newWorld.map[i][j] = 5;
+                    }
+                } else if (scaledMap[i][j] == 6) {
+                    let choice = randomNumber(1, 100);
+                    if (choice < 45) {
+                        newWorld.map[i][j] = 6;
+                    } else if (choice < 70) {
+                        newWorld.map[i][j] = 7;
+                    } else {
+                        newWorld.map[i][j] = 8;
+                    }
+                } else {
+                    newWorld.map[i][j] = scaledMap[i][j];
                 }
             }
         }
@@ -125,7 +176,7 @@ export class worldInterface {
     }
 
     getTile(pos: point): number {
-        if (pos.x < 0 || pos.x > MAP_WIDTH || pos.y < 0 || pos.y > MAP_HEIGHT) {
+        if (pos.x < 0 || pos.x > MAP_WIDTH-1 || pos.y < 0 || pos.y > MAP_HEIGHT-1) {
             return 0;
         }
         return this.world.map[pos.x][pos.y];
