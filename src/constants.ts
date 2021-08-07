@@ -5,6 +5,6 @@ export const MAP_HEIGHT = 400;
 
 export const TILE_DIMENSION = 64;
 
-export const PLAYER_SPEED = 7;
+export const PLAYER_SPEED = 2;
 
 export const MAP_GENERATION_SCALE = 50;

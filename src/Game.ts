@@ -28,6 +28,11 @@ export class Game {
   tiles: Record<string, HTMLImageElement>;
   position: point;
   rockSprite: HTMLImageElement;
+  waterFrame: number;
+  lastWaterUpdate: number;
+  deltaWaterAnimation: number;
+  waterAnimation: HTMLImageElement[];
+  lastTimeStamp: number;
 
   constructor(canvas: string, world: worldInterface) {
     this.world = world;
@@ -42,6 +47,11 @@ export class Game {
     this.resizeCanvas();
     this.keyboard = new KeyboardManager();
     this.player = new Player(this.canvas.width / 2, this.canvas.height / 2);
+    this.waterFrame = 0;
+    this.lastWaterUpdate = 0;
+    this.deltaWaterAnimation = 350;
+    this.waterAnimation = [];
+    this.lastTimeStamp = 0;
   }
 
   resizeCanvas(): void {
@@ -60,22 +70,27 @@ export class Game {
   }
 
   update(time: number): void {
+    let deltaTime = (time - this.lastTimeStamp) / 10;
     this.playerDirection = direction.None;
     if (this.keyboard.isKeyPressed("KeyW")) {
       this.playerDirection = direction.Up;
-      this.position.y -= PLAYER_SPEED;
+      this.position.y -= PLAYER_SPEED * deltaTime;
     } else if (this.keyboard.isKeyPressed("KeyS")) {
       this.playerDirection = direction.Down;
-      this.position.y += PLAYER_SPEED;
+      this.position.y += PLAYER_SPEED * deltaTime;
     }
     if (this.keyboard.isKeyPressed("KeyA")) {
       this.playerDirection = direction.Left;
-      this.position.x -= PLAYER_SPEED;
+      this.position.x -= PLAYER_SPEED * deltaTime;
     } else if (this.keyboard.isKeyPressed("KeyD")) {
       this.playerDirection = direction.Right;
-      this.position.x += PLAYER_SPEED;
+      this.position.x += PLAYER_SPEED * deltaTime;
     }
     this.player.update(time, this.playerDirection);
+    if((time - this.lastWaterUpdate) >= this.deltaWaterAnimation) {
+      this.waterFrame = ++this.waterFrame % this.waterAnimation.length;
+      this.lastWaterUpdate = time;
+    }
   }
 
   draw(): void {
@@ -93,13 +108,23 @@ export class Game {
         let x = (c - startCol) * TILE_DIMENSION + offsetX;
         let y = (r - startRow) * TILE_DIMENSION + offsetY;
         if (tile !== 0) {
-          this.ctx.drawImage(
-            this.tiles[tile],
-            Math.round(x),
-            Math.round(y),
-            TILE_DIMENSION,
-            TILE_DIMENSION
-          );
+          if (tile === 12) {
+            this.ctx.drawImage(
+              this.waterAnimation[this.waterFrame],
+              Math.round(x),
+              Math.round(y),
+              TILE_DIMENSION,
+              TILE_DIMENSION
+            );
+          } else {
+            this.ctx.drawImage(
+              this.tiles[tile],
+              Math.round(x),
+              Math.round(y),
+              TILE_DIMENSION,
+              TILE_DIMENSION
+            );
+          }
         }
         if (this.world.getRock({ x: c, y: r })) {
           this.ctx.drawImage(
@@ -113,17 +138,25 @@ export class Game {
       }
     }
     this.player.draw(this.ctx);
-    requestAnimationFrame(() => { this.draw(); });
+    requestAnimationFrame((t) => { 
+      this.update(t);
+      this.draw();
+      this.lastTimeStamp = t;
+    });
   }
 
   async run(): Promise<void> {
     this.tiles = await loadTiles();
     this.rockSprite = await loadImage("/assets/rock.png");
     await this.player.init();
+    for (let i = 1; i <= 5; i++) {
+      this.waterAnimation.push(await loadImage(`/assets/tiles/water/${i}.png`));
+    }
     this.keyboard.startListening();
-    setInterval(() => {
-      this.update(Date.now());
-    }, 30);
-    requestAnimationFrame(() => { this.draw(); });
+    requestAnimationFrame((t) => { 
+      this.update(t);
+      this.draw();
+      this.lastTimeStamp = t;
+    });
   }
 }

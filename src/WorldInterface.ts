@@ -96,7 +96,7 @@ export const generateWorld = async (): Promise<world> => {
                 //Makes the noise value between 0 and 1
                 let terrainType = (noise + 1) / 2;
                 if (terrainType < 0.3) {
-                    smallMap[i][j] = 9;
+                    smallMap[i][j] = 12;
                     tmpctx.fillStyle = "blue";
                     tmpctx.fillRect(i,j,1,1);
                 } else if (terrainType < 0.7) {
@@ -147,12 +147,18 @@ export const generateWorld = async (): Promise<world> => {
                     }
                 } else if (scaledMap[i][j] == 6) {
                     let choice = randomNumber(1, 100);
-                    if (choice < 45) {
+                    if (choice < 40) {
                         newWorld.map[i][j] = 6;
-                    } else if (choice < 70) {
+                    } else if (choice < 65) {
                         newWorld.map[i][j] = 7;
-                    } else {
+                    } else if (choice < 75) {
                         newWorld.map[i][j] = 8;
+                    } else if (choice < 85) {
+                        newWorld.map[i][j] = 9;
+                    } else if (choice < 90) {
+                        newWorld.map[i][j] = 10;
+                    } else {
+                        newWorld.map[i][j] = 11;
                     }
                 } else {
                     newWorld.map[i][j] = scaledMap[i][j];
