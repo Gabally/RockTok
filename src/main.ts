@@ -1,7 +1,7 @@
 import "./style.css";
 import "../assets/EarlyGameboyFont.css";
 import { Game } from "./Game";
-import { generateWorld, worldInterface } from "./WorldInterface";
+import { generateWorld, worldInterface } from "./Wolrd";
 import { KeyValueIDB } from "./KeyValueIDB";
 
 var game: Game;

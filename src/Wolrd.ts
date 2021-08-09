@@ -53,6 +53,27 @@ export interface world {
     playerHP: number
 }
 
+export enum TILES {
+    GRASS_PLAIN = 1,
+    GRASS_SMALL_PLANT,
+    GRASS_WEEDS,
+    GRASS_HEDGE,
+    GRASS_DIRT,
+    SAND_PLAIN,
+    SAND_MOVED,
+    SAND_DOTS,
+    SAND_CACTUS,
+    SAND_STICK,
+    SAND_FAT_PLANT,
+    WATER,
+    GRAVEL_HORIZONTAL,
+    GRAVEL_VERTICAL,
+    GRAVEL_TOP_LEFT,
+    GRAVEL_TOP_RIGHT,
+    GRAVEL_BOTTOM_RIGHT,
+    GRAVEL_BOTTOM_LEFT
+}
+
 const getRandomCoordinate = (): point => {
     return {
         x: randomNumber(0, MAP_WIDTH * TILE_DIMENSION),
@@ -83,32 +104,59 @@ export const generateWorld = async (): Promise<world> => {
                 });
             }
         }
-        let cnv = document.createElement("canvas");
-        cnv.width = MAP_WIDTH/MAP_GENERATION_SCALE;
-        cnv.height = MAP_HEIGHT/MAP_GENERATION_SCALE;
-        let tmpctx = cnv.getContext("2d");
         let noiseGenerator = new PerlinNoise();
         let smallMap = new Array(MAP_WIDTH/MAP_GENERATION_SCALE);
         for (let i = 0; i < smallMap.length; i++) {
             smallMap[i] = new Array(MAP_HEIGHT/MAP_GENERATION_SCALE);
             for (let j = 0; j < MAP_HEIGHT/MAP_GENERATION_SCALE; j++) {
                 let noise = noiseGenerator.noise(i, j);
-                //Makes the noise value between 0 and 1
                 let terrainType = (noise + 1) / 2;
-                if (terrainType < 0.3) {
-                    smallMap[i][j] = 12;
-                    tmpctx.fillStyle = "blue";
-                    tmpctx.fillRect(i,j,1,1);
+                if (terrainType < 0.2) {
+                    smallMap[i][j] = TILES.WATER;
                 } else if (terrainType < 0.7) {
-                    smallMap[i][j] = 1;
-                    tmpctx.fillStyle = "green";
-                    tmpctx.fillRect(i,j,1,1);                    
+                    smallMap[i][j] = TILES.GRASS_PLAIN;
                 } else {
-                    smallMap[i][j] = 6;
-                    tmpctx.fillStyle = "yellow";
-                    tmpctx.fillRect(i,j,1,1);
+                    smallMap[i][j] = TILES.SAND_PLAIN;
                 }
-                if (randomNumber(0, 50) === 4) {
+            }
+        }
+        let scaledMap = scaleArray(smallMap, MAP_GENERATION_SCALE);
+        newWorld.map = new Array(scaledMap.length);
+        for(let i = 0; i < scaledMap.length; i++) {
+            newWorld.map[i] = new Array(scaledMap[i].length);
+            for(let j = 0; j < scaledMap[i].length; j++) {
+                if (scaledMap[i][j] == TILES.GRASS_PLAIN) {
+                    let choice = randomNumber(1, 100);
+                    if (choice < 80) {
+                        newWorld.map[i][j] = TILES.GRASS_PLAIN;
+                    } else if (choice < 85) {
+                        newWorld.map[i][j] = TILES.GRASS_SMALL_PLANT;
+                    } else if (choice < 90) {
+                        newWorld.map[i][j] = TILES.GRASS_WEEDS;
+                    } else if (choice < 95) {
+                        newWorld.map[i][j] = TILES.GRASS_HEDGE;
+                    } else {
+                        newWorld.map[i][j] = TILES.GRASS_DIRT;
+                    }
+                } else if (scaledMap[i][j] == TILES.SAND_PLAIN) {
+                    let choice = randomNumber(1, 100);
+                    if (choice < 40) {
+                        newWorld.map[i][j] = TILES.SAND_PLAIN;
+                    } else if (choice < 65) {
+                        newWorld.map[i][j] = TILES.SAND_MOVED;
+                    } else if (choice < 75) {
+                        newWorld.map[i][j] = TILES.SAND_DOTS;
+                    } else if (choice < 85) {
+                        newWorld.map[i][j] = TILES.SAND_CACTUS;
+                    } else if (choice < 90) {
+                        newWorld.map[i][j] = TILES.SAND_STICK;
+                    } else {
+                        newWorld.map[i][j] = TILES.SAND_FAT_PLANT;
+                    }
+                } else {
+                    newWorld.map[i][j] = scaledMap[i][j];
+                }
+                if (newWorld.map[i][j] !== TILES.WATER  && randomNumber(0, 90) === 1) {
                     newWorld.rocks.push({
                         pos: {
                             x: i,
@@ -119,49 +167,47 @@ export const generateWorld = async (): Promise<world> => {
                 }
             }
         }
-        let image = new Image();
-        image.src = cnv.toDataURL("image/png");
-        image.width = cnv.width*MAP_GENERATION_SCALE;
-        image.height = cnv.height*MAP_GENERATION_SCALE;
-        image.style.imageRendering = "pixelated";
-        let w = window.open("https://gabally.net", 'map','width=700,height=500');
-        w.document.write(image.outerHTML);
-        w.focus();
-        let scaledMap = scaleArray(smallMap, MAP_GENERATION_SCALE);
-        newWorld.map = new Array(scaledMap.length);
-        for(let i = 0; i < scaledMap.length; i++) {
-            newWorld.map[i] = new Array(scaledMap[i].length);
-            for(let j = 0; j < scaledMap[i].length; j++) {
-                if (scaledMap[i][j] == 1) {
-                    let choice = randomNumber(1, 100);
-                    if (choice < 80) {
-                        newWorld.map[i][j] = 1;
-                    } else if (choice < 85) {
-                        newWorld.map[i][j] = 2;
-                    } else if (choice < 90) {
-                        newWorld.map[i][j] = 3;
-                    } else if (choice < 95) {
-                        newWorld.map[i][j] = 4;
-                    } else {
-                        newWorld.map[i][j] = 5;
+
+        for(let i = 0; i < newWorld.map.length; i++) {
+            for(let j = 0; j < newWorld.map[i].length; j++) {
+                if (i < (newWorld.map.length - 1) && j < (newWorld.map[i].length - 1)) {
+                    if (newWorld.map[i][j] !== newWorld.map[i][j+1] 
+                        && newWorld.map[i][j] !== newWorld.map[i+1][j] 
+                        && newWorld.map[i][j] === newWorld.map[i+1][j+1]) {
+                            newWorld.map[i][j+1] = newWorld.map[i][j];
+                            newWorld.map[i+1][j] = newWorld.map[i][j];
                     }
-                } else if (scaledMap[i][j] == 6) {
-                    let choice = randomNumber(1, 100);
-                    if (choice < 40) {
-                        newWorld.map[i][j] = 6;
-                    } else if (choice < 65) {
-                        newWorld.map[i][j] = 7;
-                    } else if (choice < 75) {
-                        newWorld.map[i][j] = 8;
-                    } else if (choice < 85) {
-                        newWorld.map[i][j] = 9;
-                    } else if (choice < 90) {
-                        newWorld.map[i][j] = 10;
-                    } else {
-                        newWorld.map[i][j] = 11;
+                }
+                if (newWorld.map[i][j] === TILES.WATER) {
+                    if (i > 0 && newWorld.map[i-1][j] !== TILES.WATER) {
+                        newWorld.map[i-1][j] = TILES.GRAVEL_VERTICAL;
                     }
-                } else {
-                    newWorld.map[i][j] = scaledMap[i][j];
+                    if (i < (newWorld.map.length - 1) && newWorld.map[i+1][j] !== TILES.WATER) {
+                        newWorld.map[i+1][j] = TILES.GRAVEL_VERTICAL;
+                    }
+                    if (j < (newWorld.map[i].length - 1) && newWorld.map[i][j+1] !== TILES.WATER) {
+                        newWorld.map[i][j+1] = TILES.GRAVEL_HORIZONTAL;
+                    }
+                    if (j > 0 && newWorld.map[i][j-1] !== TILES.WATER) {
+                        newWorld.map[i][j-1] = TILES.GRAVEL_HORIZONTAL;
+                    }
+                }
+            }
+        }
+
+        for(let i = 0; i < newWorld.map.length; i++) {
+            for(let j = 0; j < newWorld.map[i].length; j++) {
+                if (i < (newWorld.map.length - 1) && newWorld.map[i+1][j] === TILES.GRAVEL_HORIZONTAL && j < (newWorld.map[i].length - 1) && newWorld.map[i][j+1] === TILES.GRAVEL_VERTICAL) {
+                    newWorld.map[i][j] = TILES.GRAVEL_TOP_LEFT;
+                }
+                if (i > 0 && newWorld.map[i-1][j] === TILES.GRAVEL_HORIZONTAL && j < (newWorld.map[i].length - 1) && newWorld.map[i][j+1] === TILES.GRAVEL_VERTICAL) {
+                    newWorld.map[i][j] = TILES.GRAVEL_TOP_RIGHT;
+                }
+                if (i > 0 && newWorld.map[i-1][j] === TILES.GRAVEL_HORIZONTAL && j > 0 && newWorld.map[i][j-1] === TILES.GRAVEL_VERTICAL) {
+                    newWorld.map[i][j] = TILES.GRAVEL_BOTTOM_RIGHT;
+                }
+                if (i < (newWorld.map.length - 1) && newWorld.map[i+1][j] === TILES.GRAVEL_HORIZONTAL && j < (newWorld.map[i].length - 1) && newWorld.map[i][j-1] === TILES.GRAVEL_VERTICAL) {
+                    newWorld.map[i][j] = TILES.GRAVEL_BOTTOM_LEFT;
                 }
             }
         }

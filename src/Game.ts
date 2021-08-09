@@ -1,6 +1,6 @@
 import { KeyboardManager } from "./KeyboardManager";
 import { Player } from "./Player";
-import { worldInterface } from "./WorldInterface";
+import { worldInterface } from "./Wolrd";
 import { loadImage, loadTiles } from "./utils";
 import { PLAYER_SPEED, TILE_DIMENSION } from "./constants";
 
@@ -54,7 +54,7 @@ export class Game {
     this.lastTimeStamp = 0;
   }
 
-  resizeCanvas(): void {
+  private resizeCanvas(): void {
     let newWidth = window.innerWidth - 10;
     let newHeight = window.innerHeight - 10;
     let newWidthToHeight = newWidth / newHeight;
@@ -69,22 +69,27 @@ export class Game {
     }
   }
 
-  update(time: number): void {
+  checkWorldCollision(offsetX: number, offsetY: number): boolean {
+    return this.world.getRock({ x: Math.floor((this.position.x + offsetX) / TILE_DIMENSION) + 8, y: Math.floor((this.position.y + offsetY) / TILE_DIMENSION) + 4 });
+  }
+
+  private update(time: number): void {
     let deltaTime = (time - this.lastTimeStamp) / 10;
+    let adjustedSpeed = PLAYER_SPEED * deltaTime;
     this.playerDirection = direction.None;
-    if (this.keyboard.isKeyPressed("KeyW")) {
+    if (this.keyboard.isKeyPressed("KeyW") && !this.checkWorldCollision(0, -adjustedSpeed)) {
       this.playerDirection = direction.Up;
-      this.position.y -= PLAYER_SPEED * deltaTime;
-    } else if (this.keyboard.isKeyPressed("KeyS")) {
+      this.position.y -= adjustedSpeed;
+    } else if (this.keyboard.isKeyPressed("KeyS") && !this.checkWorldCollision(0, adjustedSpeed)) {
       this.playerDirection = direction.Down;
-      this.position.y += PLAYER_SPEED * deltaTime;
+      this.position.y += adjustedSpeed;
     }
-    if (this.keyboard.isKeyPressed("KeyA")) {
+    if (this.keyboard.isKeyPressed("KeyA") && !this.checkWorldCollision(-adjustedSpeed, 0)) {
       this.playerDirection = direction.Left;
-      this.position.x -= PLAYER_SPEED * deltaTime;
-    } else if (this.keyboard.isKeyPressed("KeyD")) {
+      this.position.x -= adjustedSpeed;
+    } else if (this.keyboard.isKeyPressed("KeyD") && !this.checkWorldCollision(adjustedSpeed, 0)) {
       this.playerDirection = direction.Right;
-      this.position.x += PLAYER_SPEED * deltaTime;
+      this.position.x += adjustedSpeed;
     }
     this.player.update(time, this.playerDirection);
     if((time - this.lastWaterUpdate) >= this.deltaWaterAnimation) {
@@ -93,7 +98,7 @@ export class Game {
     }
   }
 
-  draw(): void {
+  private draw(): void {
     this.ctx.imageSmoothingEnabled = false;
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     let startCol = Math.floor(this.position.x / TILE_DIMENSION);
@@ -147,7 +152,7 @@ export class Game {
 
   async run(): Promise<void> {
     this.tiles = await loadTiles();
-    this.rockSprite = await loadImage("/assets/rock.png");
+    this.rockSprite = await loadImage("/assets/worldElememts/rock.png");
     await this.player.init();
     for (let i = 1; i <= 5; i++) {
       this.waterAnimation.push(await loadImage(`/assets/tiles/water/${i}.png`));
