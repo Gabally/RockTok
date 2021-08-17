@@ -17,6 +17,13 @@ body {
     align-items: center;
 }
 
+.px-rendering {
+    image-rendering: -moz-crisp-edges;
+    image-rendering: -webkit-crisp-edges;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+}
+
 #menu {
     justify-content: center;
     align-items: center;
@@ -154,16 +161,23 @@ body {
 }
 
 #inventory {
-    background: url("/assets/rockTexture.png");
-    background-size: 128px;
-    image-rendering: pixelated;
-    image-rendering: crisp-edges;
     position: absolute;
-    width: 40vw;
+    width: 50vw;
+    height: 70vh;
     z-index: 99999;
     left: 50%;
-    top: 50%;
+    top: 45%;
     transform: translate(-50%, -50%);
+    overflow-y: scroll;
+    border: 5px solid black;
+    border-radius: 2px;
+    background: rgb(230, 202, 80);
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+#inventory::-webkit-scrollbar {
+    display: none;
 }
 
 .m-text {
@@ -173,15 +187,38 @@ body {
 }
 
 .item-slot {
+    height: 8vh;
     width: 100%;
-    padding-bottom: 100%;
     background: red;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 #item-container {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr 1fr;
-    grid-template-rows: 1fr 1fr 1fr;
     align-items: center;
     justify-items: center;
+}
+
+.item-slot-container {
+    display: flex;
+    align-items: center;
+}
+
+.flip {
+    transform: scaleX(-1);
+}
+
+.s-arrow {
+    width: 6%;
+}
+
+.item-slot-text {
+    font-size: 24px;
+    margin-left: 25px;
+}
+
+.item-slot-icon {
+    width: 48px;
+    height: 48px
 }

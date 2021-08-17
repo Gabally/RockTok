@@ -38,12 +38,16 @@ export const loadTiles = async (): Promise<Record<number, HTMLImageElement>> => 
         };
 }
 
-/*
 export const loadWorldElements = async (): Promise<Record<number, HTMLImageElement>> => {
-
+    return {
+        1: await loadImage("/assets/worldElements/rocks/1.png"),
+        2: await loadImage("/assets/worldElements/rocks/2.png"),
+        3: await loadImage("/assets/worldElements/rocks/3.png"),
+        4: await loadImage("/assets/worldElements/trees/1.png"),
+        5: await loadImage("/assets/worldElements/trees/2.png"),
+        6: await loadImage("/assets/worldElements/trees/3.png"),
+    };
 }
-*/
-
 export const scaleArray = (array: number[][], factor: number): number[][] => {
 	let scaled: number[][] = [];
 	for(const row of array) {

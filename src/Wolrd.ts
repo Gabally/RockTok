@@ -22,11 +22,13 @@ export interface furnace {
 }
 
 export interface rock {
+    id: number,
     pos: point,
     hp: number
 }
 
 export interface tree {
+    id: number,
     pos: point,
     hp: number
 }
@@ -50,7 +52,8 @@ export interface world {
     time: number,
     playerPosition: point,
     playerInventory: itemStack[],
-    playerHP: number
+    playerHP: number,
+    drops: itemStack[]
 }
 
 export enum TILES {
@@ -74,15 +77,39 @@ export enum TILES {
     GRAVEL_BOTTOM_LEFT
 }
 
-const getRandomCoordinate = (): point => {
-    return {
-        x: randomNumber(0, MAP_WIDTH * TILE_DIMENSION),
-        y: randomNumber(0, MAP_HEIGHT * TILE_DIMENSION)
-    }
+export enum WORLD_ELEMENTS {
+    BIG_BROKE_ROCK = 1,
+    ROCK_GROUP,
+    SMOOTH_ROCK,
+    BASIC_TREE
 }
 
 export const generateWorld = async (): Promise<world> => {
     return new Promise((resolve) => {
+
+        const getRandomPosition = (scale=true): point => {
+            while (true) {
+                let position = {
+                    x: randomNumber(0, MAP_WIDTH - 1),
+                    y: randomNumber(0, MAP_HEIGHT - 1)
+                }
+                if (![TILES.GRAVEL_BOTTOM_LEFT,TILES.GRAVEL_BOTTOM_RIGHT,TILES.GRAVEL_TOP_LEFT,TILES.GRAVEL_TOP_RIGHT,TILES.GRAVEL_HORIZONTAL,TILES.GRAVEL_VERTICAL,TILES.WATER].includes(newWorld.map[position.x][position.y])) {
+                    if (scale) {
+                        return {
+                            x: position.x * TILE_DIMENSION,
+                            y: position.y  * TILE_DIMENSION
+                        };
+                    } else {
+                        return {
+                            x: position.x,
+                            y: position.y
+                        };
+                    }
+                    
+                }
+            }
+        }
+
         let newWorld: world = {
             chests: [],
             furnaces: [],
@@ -90,20 +117,13 @@ export const generateWorld = async (): Promise<world> => {
             rocks: [],
             trees: [],
             time: 8,
-            playerPosition: getRandomCoordinate(),
+            playerPosition: { x: 0, y: 0 },
             map: [],
             playerInventory: [],
-            playerHP: 100
+            playerHP: 100,
+            drops: []
         };
-        for (let i = 0; i < randomNumber(50, 300); i++) {
-            let pos: point = getRandomCoordinate();
-            if (newWorld.rocks.filter(r => r.pos.x == pos.x && r.pos.y == pos.y).length === 0 && newWorld.trees.filter(t => t.pos.x == pos.x && t.pos.y == pos.y).length === 0) {
-                newWorld.trees.push({
-                    pos: pos,
-                    hp: 100
-                });
-            }
-        }
+
         let noiseGenerator = new PerlinNoise();
         let smallMap = new Array(MAP_WIDTH/MAP_GENERATION_SCALE);
         for (let i = 0; i < smallMap.length; i++) {
@@ -156,8 +176,9 @@ export const generateWorld = async (): Promise<world> => {
                 } else {
                     newWorld.map[i][j] = scaledMap[i][j];
                 }
-                if (newWorld.map[i][j] !== TILES.WATER  && randomNumber(0, 90) === 1) {
+                if (newWorld.map[i][j] !== TILES.WATER  && randomNumber(0, 100) === 1) {
                     newWorld.rocks.push({
+                        id: randomNumber(1, 3),
                         pos: {
                             x: i,
                             y: j
@@ -195,6 +216,17 @@ export const generateWorld = async (): Promise<world> => {
             }
         }
 
+        for (let i = 0; i < randomNumber(10000, 80000); i++) {
+            let pos = getRandomPosition(false);
+            if (newWorld.rocks.filter(r => r.pos.x == pos.x && r.pos.y == pos.y).length === 0 && newWorld.trees.filter(t => t.pos.x == pos.x && t.pos.y == pos.y).length === 0 && randomNumber(1, 100) < 20) {
+                newWorld.trees.push({
+                    id: randomNumber(4, 6),
+                    pos: pos,
+                    hp: 100
+                });
+            }
+        }
+
         for(let i = 0; i < newWorld.map.length; i++) {
             for(let j = 0; j < newWorld.map[i].length; j++) {
                 if (i < (newWorld.map.length - 1) && newWorld.map[i+1][j] === TILES.GRAVEL_HORIZONTAL && j < (newWorld.map[i].length - 1) && newWorld.map[i][j+1] === TILES.GRAVEL_VERTICAL) {
@@ -211,20 +243,29 @@ export const generateWorld = async (): Promise<world> => {
                 }
             }
         }
+
+        newWorld.playerPosition = getRandomPosition();
+
         resolve(newWorld);
     });
 };
 
 export class worldInterface {
     world: world;
-    rocks: Record<string,number> = {};
+    rocks: Record<string,rock> = {};
+    trees: Record<string,tree> = {};
 
     constructor(data: any) {
         this.world = <world>data;
-        this.world.rocks.forEach(e => {
-            this.rocks[e.pos.x + "|" + e.pos.y] = e.hp;
+        this.world.rocks.forEach(rock => {
+            this.rocks[`${rock.pos.x}|${rock.pos.y}`] = rock;
         });
+        this.world.trees.forEach(tree => {
+            this.trees[`${tree.pos.x}|${tree.pos.y}`] = tree;
+        });
+        console.log(this.trees);
         delete this.world.rocks;
+        delete this.world.trees;
     }
 
     getTile(pos: point): number {
@@ -238,7 +279,15 @@ export class worldInterface {
         return this.world.playerPosition;
     }
 
-    getRock(pos: point): boolean {
-        return this.rocks[pos.x + "|" + pos.y] !== undefined;
+    getRock(pos: point): rock {
+        return this.rocks[`${pos.x}|${pos.y}`];
     }
+    
+    getTree(pos: point): tree {
+        return this.trees[`${pos.x}|${pos.y}`];
+    }
+
+    getPlayerInventory(): itemStack[] {
+        return this.world.playerInventory;
+    } 
 }
