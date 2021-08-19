@@ -1,15 +1,15 @@
 import { SpriteSplitter } from "./SpriteSplitter";
 import { point, direction } from "./Game";
+import { animation } from "./Game";
 
 export class Player {
-    up: HTMLImageElement[];
-    down: HTMLImageElement[];
-    left: HTMLImageElement[];
-    rigth: HTMLImageElement[];
-    idle: HTMLImageElement[];
-    currentAnimation: HTMLImageElement[];
+    up: animation;
+    down: animation;
+    left: animation;
+    rigth: animation;
+    idle: animation;
+    currentAnimation: animation;
     currentFrame =  0;
-    deltaAnime = 300;
     position: point;
     lastTimeStamp = 0;
     dimensions = 64;
@@ -20,24 +20,39 @@ export class Player {
 
     async init(): Promise<void> {
         let splitter = new SpriteSplitter();
-        this.idle = await splitter.split("/assets/player/idle.png", 2);
-        this.up = await splitter.split("/assets/player/up.png", 2);
-        this.down = await splitter.split("/assets/player/down.png", 2);
-        this.left = await splitter.split("/assets/player/left.png", 4);
-        this.rigth = await splitter.split("/assets/player/rigth.png", 4);
+        this.idle = {
+            frames: await splitter.split("/assets/player/idle.png", 3, false),
+            deltaAnimation: 500
+        };
+        this.up = {
+            frames: await splitter.split("/assets/player/up.png", 2, false),
+            deltaAnimation: 100
+        };
+        this.down = {
+            frames: await splitter.split("/assets/player/down.png", 2, false),
+            deltaAnimation: 100
+        }
+        this.left = {
+            frames: await splitter.split("/assets/player/side.png", 4, false),
+            deltaAnimation: 80
+        };
+        this.rigth = {
+            frames: await splitter.split("/assets/player/side.png", 4, true),
+            deltaAnimation: 100 
+        };
         this.currentAnimation = this.idle;
     }
 
     draw(ctx: CanvasRenderingContext2D) {
-        if (this.currentAnimation[this.currentFrame] === undefined) {
+        if (this.currentAnimation.frames[this.currentFrame] === undefined) {
             this.currentFrame = 0;
         }
-        ctx.drawImage(this.currentAnimation[this.currentFrame], this.position.x-(this.dimensions/2), this.position.y-(this.dimensions/2), this.dimensions, this.dimensions);
+        ctx.drawImage(this.currentAnimation.frames[this.currentFrame], this.position.x-(this.dimensions/2), this.position.y-(this.dimensions/2), this.dimensions, this.dimensions);
     }
     
     update(time: number, dir: direction) {
-        if((time - this.lastTimeStamp) >= this.deltaAnime) {
-            this.currentFrame = ++this.currentFrame % this.currentAnimation.length;
+        if((time - this.lastTimeStamp) >= this.currentAnimation.deltaAnimation) {
+            this.currentFrame = ++this.currentFrame % this.currentAnimation.frames.length;
             this.lastTimeStamp = time;
         }
         switch (dir) {

@@ -10,12 +10,15 @@ var db = new KeyValueIDB();
 const uiElements: Record<string, string> = {
     mainMenu: "menu",
     gameScreen: "game",
-    worldSelector: "worldSelector"
+    worldSelector: "worldSelector",
+    characterCreator: "characterCreator"
 }
 
 const resetUI = (): void => {
     Object.keys(uiElements).forEach(id => {
-        document.getElementById(uiElements[id]).style.display = "none";
+        let el = document.getElementById(uiElements[id]);
+        //if (!el.dataset.display) { el.dataset.display = getComputedStyle(el).getPropertyValue("display"); }
+        el.style.display = "none";
     });
 };
 
@@ -25,7 +28,8 @@ const AddclickListener = (id: string, cb: () => void): void => {
 };
 
 const Show = (id: string): void => {
-    document.getElementById(id).style.display = "block";
+    let el = document.getElementById(id);
+    el.style.display = "block";
 };
 
 const showInputDialog = async (message: string): Promise<string> => {

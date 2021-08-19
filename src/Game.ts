@@ -17,6 +17,11 @@ export enum direction {
   None
 }
 
+export interface animation {
+  frames: HTMLImageElement[],
+  deltaAnimation: number
+}
+
 export class Game {
   canvas: HTMLCanvasElement;
   ratio = 16 / 9;
@@ -178,7 +183,9 @@ export class Game {
 
   private renderInventory(): void {
     let inventory = document.getElementById("item-container");
-    for (let i = 0; i < this.world.getPlayerInventory().length; i++) {
+    inventory.innerHTML = "";
+    let playerInventory = this.world.getPlayerInventory();
+    for (let i = 0; i < playerInventory.length; i++) {
       if (this.selectedItem === i) {
         let itemSlot = document.createElement("div");
         itemSlot.style.justifyContent = "space-between";

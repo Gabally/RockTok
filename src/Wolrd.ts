@@ -246,6 +246,11 @@ export const generateWorld = async (): Promise<world> => {
 
         newWorld.playerPosition = getRandomPosition();
 
+        newWorld.playerInventory.push({
+            id: 0,
+            quantity: 10
+        });
+
         resolve(newWorld);
     });
 };
