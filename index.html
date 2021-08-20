@@ -36,22 +36,22 @@
             </div>
             <div class="aCenter" id="arrowContainer">
                 <div class="aCenter">
-                    <img src="/assets/arrow.png" class="character-creator-arrow px-rendering" alt="">
-                    <img src="/assets/arrow.png" class="character-creator-arrow px-rendering" alt="">
-                    <img src="/assets/arrow.png" class="character-creator-arrow px-rendering" alt="">
+                    <img src="/assets/arrow.png" class="character-creator-arrow px-rendering" id="previousHat" alt="">
+                    <img src="/assets/arrow.png" class="character-creator-arrow px-rendering" id="previousShirtColor" alt="">
                 </div>
-                <img src="" alt="">
+                <canvas id="characterDisplay" class="px-rendering">
+                    Your browser does not support the canvas element, the game cannot run.
+                </canvas>
                 <div class="aCenter">
-                    <img src="/assets/arrow.png" class="character-creator-arrow-flip px-rendering" alt="">
-                    <img src="/assets/arrow.png" class="character-creator-arrow-flip px-rendering" alt="">
-                    <img src="/assets/arrow.png" class="character-creator-arrow-flip px-rendering" alt="">
+                    <img src="/assets/arrow.png" class="character-creator-arrow-flip px-rendering" id="nextHat" alt="">
+                    <img src="/assets/arrow.png" class="character-creator-arrow-flip px-rendering" id="nextShirtColor" alt="">
                 </div>
             </div>
             <div>
-                <button class="m-btn">
+                <button class="m-btn" id="backFromCharacterCreation">
                     Back
                 </button>
-                <button class="m-btn">
+                <button class="m-btn" id="confirmCharacter">
                     Confirm
                 </button>
             </div>

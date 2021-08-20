@@ -34,11 +34,11 @@ export class Player {
         }
         this.left = {
             frames: await splitter.split("/assets/player/side.png", 4, false),
-            deltaAnimation: 80
+            deltaAnimation: 110
         };
         this.rigth = {
             frames: await splitter.split("/assets/player/side.png", 4, true),
-            deltaAnimation: 100 
+            deltaAnimation: 110 
         };
         this.currentAnimation = this.idle;
     }

@@ -3,6 +3,7 @@ import "../assets/EarlyGameboyFont.css";
 import { Game } from "./Game";
 import { generateWorld, worldInterface } from "./Wolrd";
 import { KeyValueIDB } from "./KeyValueIDB";
+import { CharacterCreator } from "./CharacterCreator";
 
 var game: Game;
 var db = new KeyValueIDB();
@@ -30,6 +31,12 @@ const AddclickListener = (id: string, cb: () => void): void => {
 const Show = (id: string): void => {
     let el = document.getElementById(id);
     el.style.display = "block";
+};
+
+const removeEventListeners = (id: string) => {
+    let el = document.getElementById(id);
+    let newNode = el.cloneNode(true);
+    el.parentNode.replaceChild(newNode, el);
 };
 
 const showInputDialog = async (message: string): Promise<string> => {
@@ -108,9 +115,67 @@ const showConfirmDialog = async (message: string): Promise<boolean> => {
     });
 };
 
-AddclickListener("startSingleplayer", (): void => {
+const showAlert = async (message: string): Promise<void> => {
+    return new Promise((resolve) => {
+        let container = document.createElement("div");
+        let obscurator = document.createElement("div");
+        obscurator.setAttribute("style", "position:fixed;width:99vw;height:99vh;z-index:9999");
+        document.body.appendChild(obscurator);
+        container.setAttribute("style", 'color: white;display: flex;justify-content: center;align-items: center;z-index: 99999999;position: absolute;top: 50%;left: 50%;background: black;border: 1px solid white;transform: translate(-50%, -50%);width: 50vw;height: 40vh;flex-direction: column;font-size: 20px;padding: 10px;');
+        let text = document.createElement("div");
+        text.textContent = message;
+        container.appendChild(text);
+        let buttons = document.createElement("div");
+        buttons.setAttribute("style", 'display: flex;justify-content: space-around;width: 100%;');
+        let confirm = document.createElement("button");
+        confirm.className = "m-btn";
+        confirm.textContent = "Ok";
+        buttons.appendChild(confirm);
+        container.appendChild(buttons);
+        document.body.appendChild(container);
+        confirm.addEventListener("click", () => {
+            document.body.removeChild(container);
+            document.body.removeChild(obscurator);
+            resolve();
+        });
+    });
+};
+
+const goToCharacterCreator = (next: string): void => {
+    var characterCreator = new CharacterCreator("characterDisplay");
     resetUI();
-    Show(uiElements.worldSelector);
+    Show(uiElements.characterCreator);
+    characterCreator.display();
+    ["previousHat", "nextHat", "nextShirtColor", "previousShirtColor", "confirmCharacter"].forEach(element => {
+        removeEventListeners(element);
+    });
+    AddclickListener("previousHat", (): void => {
+        characterCreator.previousHat();
+    });
+    AddclickListener("nextHat", (): void => {
+        characterCreator.nextHat();
+    });
+    AddclickListener("nextShirtColor", (): void => {
+        characterCreator.nextShirtColor();
+    });
+    AddclickListener("previousShirtColor", (): void => {
+        characterCreator.previousShirtColor();
+    });
+    AddclickListener("confirmCharacter", async(): Promise<void> => {
+        await db.setValue("character", characterCreator.getCharacterData());
+        resetUI();
+        Show(next);
+    });
+}
+
+AddclickListener("startSingleplayer", async (): Promise<void> => {
+    if (!await db.getValue("character")) {
+        showAlert("You must create a character before playing");
+        goToCharacterCreator(uiElements.worldSelector);
+    } else {
+        resetUI();
+        Show(uiElements.worldSelector);
+    }
 });
 
 AddclickListener("newWorldBtn", async (): Promise<void> => {
@@ -130,6 +195,11 @@ AddclickListener("newWorldBtn", async (): Promise<void> => {
 });
 
 AddclickListener("backBtn", (): void => {
+    resetUI();
+    Show(uiElements.mainMenu);
+});
+
+AddclickListener("backFromCharacterCreation", async (): Promise<void> => {
     resetUI();
     Show(uiElements.mainMenu);
 });
