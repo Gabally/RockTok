@@ -1,8 +1,10 @@
 import { KeyboardManager } from "./KeyboardManager";
 import { Player } from "./Player";
 import { worldInterface } from "./Wolrd";
-import { loadImage, loadTiles, loadWorldElements } from "./utils";
-import { PLAYER_SPEED, TILE_DIMENSION } from "./constants";
+import { loadImage } from "./utils";
+import { loadItems, loadTiles, loadWorldElements } from "./loaders";
+import { ITEM_NAMES, PLAYER_SPEED, TILE_DIMENSION } from "./constants";
+import { characterData } from "./CharacterCreator";
 
 export interface point {
   x: number,
@@ -32,6 +34,7 @@ export class Game {
   world: worldInterface;
   tiles: Record<string, HTMLImageElement>;
   worldElements: Record<string, HTMLImageElement>;
+  itemsSprites:  Record<string, HTMLImageElement>;
   position: point;
   waterFrame: number;
   lastWaterUpdate: number;
@@ -41,7 +44,7 @@ export class Game {
   usingInventory: boolean;
   selectedItem: number;
 
-  constructor(canvas: string, world: worldInterface) {
+  constructor(canvas: string, world: worldInterface, character: characterData) {
     this.world = world;
     this.position = world.getPlayerPosition();
     this.canvas = <HTMLCanvasElement>document.getElementById(canvas);
@@ -53,7 +56,7 @@ export class Game {
     window.addEventListener("resize", () => this.resizeCanvas());
     this.resizeCanvas();
     this.keyboard = new KeyboardManager();
-    this.player = new Player(this.canvas.width / 2, this.canvas.height / 2);
+    this.player = new Player(this.canvas.width / 2, this.canvas.height / 2, character);
     this.waterFrame = 0;
     this.lastWaterUpdate = 0;
     this.deltaWaterAnimation = 350;
@@ -144,11 +147,21 @@ export class Game {
             );
           }
         }
+      let item = this.world.getDrop({ x: c, y: r });
+      if (item) {
+        this.ctx.drawImage(
+          this.itemsSprites[item.id],
+          Math.round(x),
+          Math.round(y),
+          TILE_DIMENSION/2,
+          TILE_DIMENSION/2,
+        );
+      }
       }
     }
     this.player.draw(this.ctx);
     for (let c = startCol; c <= endCol; c++) {
-      for (let r = startRow; r <= endRow; r++) {
+      for (let r = startRow - 5; r <= endRow; r++) {
         let x = (c - startCol) * TILE_DIMENSION + offsetX;
         let y = (r - startRow) * TILE_DIMENSION + offsetY;
         let rock = this.world.getRock({ x: c, y: r });
@@ -169,7 +182,6 @@ export class Game {
             Math.round(y),
             TILE_DIMENSION,
             TILE_DIMENSION * 2,
-
           );
         }
       }
@@ -198,12 +210,12 @@ export class Game {
         let itemContainer = document.createElement("div");
         itemContainer.className = "item-slot-container";
         let itemIcon = document.createElement("img");
-        itemIcon.src = "";
+        itemIcon.src = "/assets/items/wood_pickaxe.png";
         itemIcon.classList.add("item-slot-icon");
         itemIcon.classList.add("px-rendering");
         itemContainer.appendChild(itemIcon);
         let itemText = document.createElement("div");
-        itemText.textContent = "item name";
+        itemText.textContent = ITEM_NAMES[playerInventory[i].id];
         itemText.className = "item-slot-text";
         itemContainer.appendChild(itemText);
         itemSlot.appendChild(itemContainer);
@@ -216,7 +228,7 @@ export class Game {
         let itemContainer = document.createElement("div");
         itemContainer.className = "item-slot-container";
         let itemIcon = document.createElement("img");
-        itemIcon.src = "";
+        itemIcon.src = "/assets/items/wood_pickaxe.png";
         itemIcon.classList.add("item-slot-icon");
         itemIcon.classList.add("px-rendering");
         itemContainer.appendChild(itemIcon);
@@ -233,6 +245,7 @@ export class Game {
   async run(): Promise<void> {
     this.tiles = await loadTiles();
     this.worldElements = await loadWorldElements();
+    this.itemsSprites = await loadItems();
     await this.player.init();
     for (let i = 1; i <= 5; i++) {
       this.waterAnimation.push(await loadImage(`/assets/tiles/water/${i}.png`));
@@ -242,6 +255,22 @@ export class Game {
       this.renderInventory();
       this.usingInventory ? document.getElementById("inventory").style.display = "none" : document.getElementById("inventory").style.display = "block";
       this.usingInventory = !this.usingInventory;
+    });
+    this.keyboard.atKeyPressed("ArrowUp", () => {
+      if (this.selectedItem === this.world.getPlayerInventory().length) {
+        this.selectedItem = 0;
+      } else {
+        this.selectedItem += 1;
+      }
+      this.renderInventory();
+    });
+    this.keyboard.atKeyPressed("ArrowDown", () => {
+      if (this.selectedItem === 0) {
+        this.selectedItem = this.world.getPlayerInventory().length - 1;
+      } else {
+        this.selectedItem -= 1;
+      }
+      this.renderInventory();
     });
     requestAnimationFrame((t) => {
       this.update(t);

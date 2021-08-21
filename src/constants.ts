@@ -1,4 +1,3 @@
-
 export const MAP_WIDTH = 600;
 
 export const MAP_HEIGHT = 400;
@@ -48,3 +47,18 @@ export const SHIRT_COLORS = [
     "#2bc4a6",
     "#ebeb44"
 ]
+
+
+export enum items {
+    WOOD_PICKAXE = 1,
+    STONE_PICKAXE,
+    IRON_PICKAXE,
+    OBAMIUM_PICKAXE
+}
+
+export const ITEM_NAMES: { [index: number]: string } = {
+    [items.WOOD_PICKAXE]: "Wood Pickaxe",
+    [items.STONE_PICKAXE]: "Stone Pickaxe",
+    [items.IRON_PICKAXE]: "Iron Pickaxe",
+    [items.OBAMIUM_PICKAXE]: "Supreme Obamium Pickaxe"
+}

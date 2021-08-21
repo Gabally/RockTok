@@ -42,6 +42,12 @@ export interface itemStack {
     quantity: number
 }
 
+export interface itemDrop {
+    id: number,
+    quantity: number,
+    pos: point
+}
+
 export interface world {
     map: number[][],
     rocks: rock[],
@@ -53,7 +59,7 @@ export interface world {
     playerPosition: point,
     playerInventory: itemStack[],
     playerHP: number,
-    drops: itemStack[]
+    drops: itemDrop[]
 }
 
 export enum TILES {
@@ -246,11 +252,6 @@ export const generateWorld = async (): Promise<world> => {
 
         newWorld.playerPosition = getRandomPosition();
 
-        newWorld.playerInventory.push({
-            id: 0,
-            quantity: 10
-        });
-
         resolve(newWorld);
     });
 };
@@ -259,6 +260,7 @@ export class worldInterface {
     world: world;
     rocks: Record<string,rock> = {};
     trees: Record<string,tree> = {};
+    drops: Record<string,itemDrop> = {};
 
     constructor(data: any) {
         this.world = <world>data;
@@ -268,9 +270,12 @@ export class worldInterface {
         this.world.trees.forEach(tree => {
             this.trees[`${tree.pos.x}|${tree.pos.y}`] = tree;
         });
-        console.log(this.trees);
+        this.world.drops.forEach(drop => {
+            this.drops[`${drop.pos.x}|${drop.pos.y}`] = drop;
+        });
         delete this.world.rocks;
         delete this.world.trees;
+        delete this.world.drops;
     }
 
     getTile(pos: point): number {
@@ -294,5 +299,9 @@ export class worldInterface {
 
     getPlayerInventory(): itemStack[] {
         return this.world.playerInventory;
-    } 
+    }
+
+    getDrop(pos: point): itemDrop {
+        return this.drops[`${pos.x}|${pos.y}`];
+    }
 }

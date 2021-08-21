@@ -189,7 +189,7 @@ AddclickListener("newWorldBtn", async (): Promise<void> => {
         await updateWorldList();
         resetUI();
         Show(uiElements.gameScreen);
-        game = new Game("screen", new worldInterface(worlds[worldName]));
+        game = new Game("screen", new worldInterface(worlds[worldName]), await db.getValue("character"));
         game.run();
     }
 });
@@ -220,7 +220,7 @@ const updateWorldList = async (): Promise<void> => {
             let worlds = await db.getValue("worlds");
             resetUI();
             Show(uiElements.gameScreen);
-            game = new Game("screen", new worldInterface(worlds[key]));
+            game = new Game("screen", new worldInterface(worlds[key]), await db.getValue("character"));
             game.run();
         });
         let img = document.createElement("img");
