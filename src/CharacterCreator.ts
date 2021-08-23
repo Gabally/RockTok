@@ -17,7 +17,10 @@ export interface characterSpritesheets {
     idle: string,
     up: string,
     down: string,
-    side: string
+    side: string,
+    hitUp: string,
+    hitDown: string,
+    hitSide: string
 }
 
 export class CharacterCreator {
@@ -210,5 +213,50 @@ export const generateCharacterSpritesheetsFromData = async (character: character
         swapShirtColor(workCanvas, ctx, SHIRT_COLORS[character.shirtColor]);
     }
     spriteSheets.side = workCanvas.toDataURL("image/png");
+    let hitUp = await loadImage("/assets/player/player_up_hit.png");
+    workCanvas.width = hitUp.width;
+    ctx.clearRect(0, 0, workCanvas.width, workCanvas.height);
+    ctx.drawImage(hitUp, 0, drawY);
+    if (character.hat !== -1) {
+        let x = 0;
+        for (let i = 0; i < 4; i++) {
+            ctx.drawImage(await loadImage(`/assets/player/hats/${HATS[character.hat]}/back.png`), x+8, 2);
+            x += 32;
+        }
+    }
+    if (character.shirtColor !== -1) {
+        swapShirtColor(workCanvas, ctx, SHIRT_COLORS[character.shirtColor]);
+    }
+    spriteSheets.hitUp = workCanvas.toDataURL("image/png");
+    let hitDown = await loadImage("/assets/player/player_down_hit.png");
+    workCanvas.width = hitDown.width;
+    ctx.clearRect(0, 0, workCanvas.width, workCanvas.height);
+    ctx.drawImage(hitDown, 0, drawY);
+    if (character.hat !== -1) {
+        let x = 0;
+        for (let i = 0; i < 4; i++) {
+            ctx.drawImage(await loadImage(`/assets/player/hats/${HATS[character.hat]}/front.png`), x+8, 2);
+            x += 32;
+        }
+    }
+    if (character.shirtColor !== -1) {
+        swapShirtColor(workCanvas, ctx, SHIRT_COLORS[character.shirtColor]);
+    }
+    spriteSheets.hitDown = workCanvas.toDataURL("image/png");
+    let hitSide = await loadImage("/assets/player/side_hit.png");
+    workCanvas.width = hitSide.width;
+    ctx.clearRect(0, 0, workCanvas.width, workCanvas.height);
+    ctx.drawImage(hitSide, 0, drawY);
+    if (character.hat !== -1) {
+        let x = 0;
+        for (let i = 0; i < 4; i++) {
+            ctx.drawImage(await loadImage(`/assets/player/hats/${HATS[character.hat]}/side.png`), x+8, 2);
+            x += 32;
+        }
+    }
+    if (character.shirtColor !== -1) {
+        swapShirtColor(workCanvas, ctx, SHIRT_COLORS[character.shirtColor]);
+    }
+    spriteSheets.hitSide = workCanvas.toDataURL("image/png");
     return spriteSheets;
 }

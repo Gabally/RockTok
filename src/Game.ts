@@ -93,6 +93,9 @@ export class Game {
     let deltaTime = (time - this.lastTimeStamp) / 10;
     let adjustedSpeed = PLAYER_SPEED * deltaTime;
     this.playerDirection = direction.None;
+    if (this.player.hitting) {
+      adjustedSpeed = adjustedSpeed * 0.7;
+    }
     if (this.keyboard.isKeyPressed("KeyW") && !this.checkWorldCollision(0, -adjustedSpeed)) {
       this.playerDirection = direction.Up;
       this.position.y -= adjustedSpeed;
@@ -111,6 +114,9 @@ export class Game {
     if ((time - this.lastWaterUpdate) >= this.deltaWaterAnimation) {
       this.waterFrame = ++this.waterFrame % this.waterAnimation.length;
       this.lastWaterUpdate = time;
+    }
+    if (this.keyboard.isKeyPressed("Space")) {
+      this.player.hit(this.world.data.playerInventory[this.selectedItem]);
     }
   }
 
@@ -196,8 +202,7 @@ export class Game {
   private renderInventory(): void {
     let inventory = document.getElementById("item-container");
     inventory.innerHTML = "";
-    let playerInventory = this.world.getPlayerInventory();
-    for (let i = 0; i < playerInventory.length; i++) {
+    for (let i = 0; i < this.world.data.playerInventory.length; i++) {
       if (this.selectedItem === i) {
         let itemSlot = document.createElement("div");
         itemSlot.style.justifyContent = "space-between";
@@ -215,13 +220,18 @@ export class Game {
         itemIcon.classList.add("px-rendering");
         itemContainer.appendChild(itemIcon);
         let itemText = document.createElement("div");
-        itemText.textContent = ITEM_NAMES[playerInventory[i].id];
+        itemText.textContent = `${ITEM_NAMES[this.world.data.playerInventory[i].id]} x${this.world.data.playerInventory[i].quantity}`;
         itemText.className = "item-slot-text";
         itemContainer.appendChild(itemText);
         itemSlot.appendChild(itemContainer);
         selectedArrow.classList.add("flip");
         itemSlot.appendChild(selectedArrow.cloneNode());
         inventory.appendChild(itemSlot);
+        if (this.selectedItem !== -1) {
+          (document.getElementById("selectedItem") as HTMLImageElement).src = this.itemsSprites[this.world.data.playerInventory[i].id].src;
+        } else {
+          (document.getElementById("selectedItem") as HTMLImageElement).src = "/assets/fist.png";
+        }
       } else {
         let itemSlot = document.createElement("div");
         itemSlot.className = "item-slot";
@@ -233,7 +243,7 @@ export class Game {
         itemIcon.classList.add("px-rendering");
         itemContainer.appendChild(itemIcon);
         let itemText = document.createElement("div");
-        itemText.textContent = "item name";
+        itemText.textContent =  `${ITEM_NAMES[this.world.data.playerInventory[i].id]} x${this.world.data.playerInventory[i].quantity}`;
         itemText.className = "item-slot-text";
         itemContainer.appendChild(itemText);
         itemSlot.appendChild(itemContainer);
@@ -256,22 +266,29 @@ export class Game {
       this.usingInventory ? document.getElementById("inventory").style.display = "none" : document.getElementById("inventory").style.display = "block";
       this.usingInventory = !this.usingInventory;
     });
-    this.keyboard.atKeyPressed("ArrowUp", () => {
-      if (this.selectedItem === this.world.getPlayerInventory().length) {
+    this.keyboard.atKeyPressed("KeyQ", () => {
+      this.world.data.playerInventory.push({
+        id: 1,
+        quantity: 1
+      });
+    });
+    this.keyboard.atKeyPressed("ArrowDown", () => {
+      if (this.selectedItem === this.world.data.playerInventory.length - 1) {
         this.selectedItem = 0;
       } else {
         this.selectedItem += 1;
       }
       this.renderInventory();
     });
-    this.keyboard.atKeyPressed("ArrowDown", () => {
+    this.keyboard.atKeyPressed("ArrowUp", () => {
       if (this.selectedItem === 0) {
-        this.selectedItem = this.world.getPlayerInventory().length - 1;
+        this.selectedItem = this.world.data.playerInventory.length - 1;
       } else {
         this.selectedItem -= 1;
       }
       this.renderInventory();
     });
+    this.renderInventory();
     requestAnimationFrame((t) => {
       this.update(t);
       this.draw();

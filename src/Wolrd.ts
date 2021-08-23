@@ -257,36 +257,36 @@ export const generateWorld = async (): Promise<world> => {
 };
 
 export class worldInterface {
-    world: world;
+    data: world;
     rocks: Record<string,rock> = {};
     trees: Record<string,tree> = {};
     drops: Record<string,itemDrop> = {};
 
     constructor(data: any) {
-        this.world = <world>data;
-        this.world.rocks.forEach(rock => {
+        this.data = <world>data;
+        this.data.rocks.forEach(rock => {
             this.rocks[`${rock.pos.x}|${rock.pos.y}`] = rock;
         });
-        this.world.trees.forEach(tree => {
+        this.data.trees.forEach(tree => {
             this.trees[`${tree.pos.x}|${tree.pos.y}`] = tree;
         });
-        this.world.drops.forEach(drop => {
+        this.data.drops.forEach(drop => {
             this.drops[`${drop.pos.x}|${drop.pos.y}`] = drop;
         });
-        delete this.world.rocks;
-        delete this.world.trees;
-        delete this.world.drops;
+        delete this.data.rocks;
+        delete this.data.trees;
+        delete this.data.drops;
     }
 
     getTile(pos: point): number {
         if (pos.x < 0 || pos.x > MAP_WIDTH-1 || pos.y < 0 || pos.y > MAP_HEIGHT-1) {
             return 0;
         }
-        return this.world.map[pos.x][pos.y];
+        return this.data.map[pos.x][pos.y];
     }
 
     getPlayerPosition(): point {
-        return this.world.playerPosition;
+        return this.data.playerPosition;
     }
 
     getRock(pos: point): rock {
@@ -295,10 +295,6 @@ export class worldInterface {
     
     getTree(pos: point): tree {
         return this.trees[`${pos.x}|${pos.y}`];
-    }
-
-    getPlayerInventory(): itemStack[] {
-        return this.world.playerInventory;
     }
 
     getDrop(pos: point): itemDrop {
