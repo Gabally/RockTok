@@ -1,6 +1,6 @@
 import { MAP_HEIGHT, MAP_WIDTH, TILE_DIMENSION, MAP_GENERATION_SCALE } from "./constants";
 import { point } from "./Game";
-import { randomNumber, scaleArray } from "./utils";
+import { isDefined, randomNumber, scaleArray } from "./utils";
 import { PerlinNoise } from "./PerlinNoise";
 
 export interface chest {
@@ -23,13 +23,11 @@ export interface furnace {
 
 export interface rock {
     id: number,
-    pos: point,
     hp: number
 }
 
 export interface tree {
     id: number,
-    pos: point,
     hp: number
 }
 
@@ -42,16 +40,10 @@ export interface itemStack {
     quantity: number
 }
 
-export interface itemDrop {
-    id: number,
-    quantity: number,
-    pos: point
-}
-
 export interface world {
     map: number[][],
-    rocks: rock[],
-    trees: tree[],
+    rocks: Record<string,rock>,
+    trees: Record<string,tree>,
     chests: chest[],
     furnaces: furnace[],
     workbenches: workbench[],
@@ -59,7 +51,7 @@ export interface world {
     playerPosition: point,
     playerInventory: itemStack[],
     playerHP: number,
-    drops: itemDrop[]
+    drops: Record<string,itemStack[]>
 }
 
 export enum TILES {
@@ -120,14 +112,14 @@ export const generateWorld = async (): Promise<world> => {
             chests: [],
             furnaces: [],
             workbenches: [],
-            rocks: [],
-            trees: [],
+            rocks: {},
+            trees: {},
             time: 8,
             playerPosition: { x: 0, y: 0 },
             map: [],
             playerInventory: [],
             playerHP: 100,
-            drops: []
+            drops: {}
         };
 
         let noiseGenerator = new PerlinNoise();
@@ -183,14 +175,10 @@ export const generateWorld = async (): Promise<world> => {
                     newWorld.map[i][j] = scaledMap[i][j];
                 }
                 if (newWorld.map[i][j] !== TILES.WATER  && randomNumber(0, 100) === 1) {
-                    newWorld.rocks.push({
+                    newWorld.rocks[`${i}|${j}`] = {
                         id: randomNumber(1, 3),
-                        pos: {
-                            x: i,
-                            y: j
-                        },
                         hp: 100
-                    });
+                    };
                 }
             }
         }
@@ -224,12 +212,11 @@ export const generateWorld = async (): Promise<world> => {
 
         for (let i = 0; i < randomNumber(10000, 80000); i++) {
             let pos = getRandomPosition(false);
-            if (newWorld.rocks.filter(r => r.pos.x == pos.x && r.pos.y == pos.y).length === 0 && newWorld.trees.filter(t => t.pos.x == pos.x && t.pos.y == pos.y).length === 0 && randomNumber(1, 100) < 20) {
-                newWorld.trees.push({
+            if (!isDefined(newWorld.rocks[`${pos.x}|${pos.y}`]) && !isDefined(newWorld.trees[`${pos.x}|${pos.y}`]) && randomNumber(1, 100) < 20) {
+                newWorld.trees[`${pos.x}|${pos.y}`] = {
                     id: randomNumber(4, 6),
-                    pos: pos,
                     hp: 100
-                });
+                };
             }
         }
 
@@ -258,24 +245,18 @@ export const generateWorld = async (): Promise<world> => {
 
 export class worldInterface {
     data: world;
+    playerInventory: itemStack[];
     rocks: Record<string,rock> = {};
     trees: Record<string,tree> = {};
-    drops: Record<string,itemDrop> = {};
+    drops: Record<string,itemStack[]> = {};
 
     constructor(data: any) {
         this.data = <world>data;
-        this.data.rocks.forEach(rock => {
-            this.rocks[`${rock.pos.x}|${rock.pos.y}`] = rock;
-        });
-        this.data.trees.forEach(tree => {
-            this.trees[`${tree.pos.x}|${tree.pos.y}`] = tree;
-        });
-        this.data.drops.forEach(drop => {
-            this.drops[`${drop.pos.x}|${drop.pos.y}`] = drop;
-        });
-        delete this.data.rocks;
-        delete this.data.trees;
-        delete this.data.drops;
+        this.playerInventory = data.playerInventory;
+        this.rocks =  this.data.rocks;
+        this.trees = this.data.trees;
+        this.drops = this.data.drops;
+        //delete this.data;
     }
 
     getTile(pos: point): number {
@@ -297,7 +278,28 @@ export class worldInterface {
         return this.trees[`${pos.x}|${pos.y}`];
     }
 
-    getDrop(pos: point): itemDrop {
+    getDrops(pos: point): itemStack[] {
         return this.drops[`${pos.x}|${pos.y}`];
+    }
+
+    removeDrops(pos: point) {
+        delete this.drops[`${pos.x}|${pos.y}`];
+    }
+
+    addNewDrop(drop: itemStack, pos: point) {
+        if (!isDefined( this.drops[`${pos.x}|${pos.y}`] )) {
+            this.drops[`${pos.x}|${pos.y}`] = [];   
+        }
+        this.drops[`${pos.x}|${pos.y}`].push(drop);
+    }
+
+    pickUpDrop(drop: itemStack) {
+        for (let i = 0; i < this.playerInventory.length; i++) {
+            if (this.playerInventory[i].id === drop.id) {
+                this.playerInventory[i].quantity += drop.quantity;
+                return;
+            }
+        }
+        this.playerInventory.push(drop);
     }
 }

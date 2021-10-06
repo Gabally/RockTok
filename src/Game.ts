@@ -1,10 +1,11 @@
 import { KeyboardManager } from "./KeyboardManager";
 import { Player } from "./Player";
 import { worldInterface } from "./Wolrd";
-import { loadImage } from "./utils";
+import { loadImage, isDefined, randomNumber } from "./utils";
 import { loadItems, loadTiles, loadWorldElements } from "./loaders";
-import { ITEM_NAMES, PLAYER_SPEED, TILE_DIMENSION } from "./constants";
+import { items, ITEM_NAMES, PLAYER_SPEED, TILE_DIMENSION } from "./constants";
 import { characterData } from "./CharacterCreator";
+import { DamageIndicatorsSystem } from "./DamageIndicators";
 
 export interface point {
   x: number,
@@ -43,6 +44,9 @@ export class Game {
   lastTimeStamp: number;
   usingInventory: boolean;
   selectedItem: number;
+  damageIndicators: DamageIndicatorsSystem;
+  dropAnimationOffset: number;
+  dropAnimationCounter: number;
 
   constructor(canvas: string, world: worldInterface, character: characterData) {
     this.world = world;
@@ -62,8 +66,14 @@ export class Game {
     this.deltaWaterAnimation = 350;
     this.waterAnimation = [];
     this.lastTimeStamp = 0;
+    this.dropAnimationCounter = 0;
+    this.dropAnimationOffset = 0;
+    setInterval(() => {
+      this.dropAnimationOffset = Math.abs((this.dropAnimationCounter+=1)%20 - 10)
+    }, 100);
     this.usingInventory = false;
-    this.selectedItem = 0;
+    this.selectedItem = -1;
+    this.damageIndicators = new DamageIndicatorsSystem();
   }
 
   private resizeCanvas(): void {
@@ -82,19 +92,95 @@ export class Game {
   }
 
   checkWorldCollision(offsetX: number, offsetY: number): boolean {
-    return this.world.getRock({ x: Math.floor((this.position.x + offsetX) / TILE_DIMENSION) + 8, y: Math.floor((this.position.y + offsetY) / TILE_DIMENSION) + 4 }) !== undefined
-    || 
-    this.world.getTree({ x: Math.floor((this.position.x + offsetX) / TILE_DIMENSION) + 8, y: Math.floor((this.position.y + offsetY) / TILE_DIMENSION) + 4 }) !== undefined
-    ||
-    this.world.getTree({ x: Math.floor((this.position.x + offsetX) / TILE_DIMENSION) + 8, y: Math.floor((this.position.y + offsetY) / TILE_DIMENSION) + 3 }) !== undefined;
+    let xPos =  Math.floor((this.position.x + offsetX) / TILE_DIMENSION) + 8;
+    let yPos = Math.floor((this.position.y + offsetY) / TILE_DIMENSION) + 4;
+    return isDefined(this.world.getRock({ x: xPos, y: yPos })) || 
+    isDefined(this.world.getTree({ x: xPos, y: yPos })) ||
+    isDefined(this.world.getTree({ x: xPos, y: yPos - 1 }));
+  }
+
+  dealDamage(offsetX: number, offsetY: number): void {
+    let xPos =  Math.floor((this.position.x + offsetX) / TILE_DIMENSION) + 8;
+    let yPos = Math.floor((this.position.y + offsetY) / TILE_DIMENSION) + 4;
+    if (isDefined(this.world.getRock({ x: xPos, y: yPos }))) {
+      let damage = 0;
+      let itemID = this.selectedItem !== -1 ? this.world.playerInventory[this.selectedItem].id : 0;
+      switch (itemID) {
+        case items.WOOD_PICKAXE:
+          damage = 15;  
+          break;
+        case items.STONE_PICKAXE:
+          damage = 25;
+          break;
+        case items.IRON_PICKAXE:
+          damage = 35;
+          break;
+        case items.OBAMIUM_PICKAXE:
+          damage = 50;
+          break;
+        default:
+          damage = 3;
+          break;
+      }
+      this.damageIndicators.addIndicator(damage, { x: this.canvas.width/2, y: this.canvas.height/2 });
+      this.world.rocks[`${xPos}|${yPos}`].hp -= damage;
+      if (this.world.rocks[`${xPos}|${yPos}`].hp <= 0) {
+        if (this.world.rocks[`${xPos}|${yPos}`].hp <= 0) {
+          this.world.addNewDrop({
+            id: items.ROCK,
+            quantity: randomNumber(1, 3)
+          }, { x: xPos, y: yPos });
+          delete this.world.trees[`${xPos}|${yPos}`];
+        }
+        delete this.world.rocks[`${xPos}|${yPos}`];
+      }
+    } else if (isDefined(this.world.getTree({ x: xPos, y: yPos })) || isDefined(this.world.getTree({ x: xPos, y: yPos - 1 }))) {
+      let damage = 0;
+      let itemID = this.selectedItem !== -1 ? this.world.playerInventory[this.selectedItem].id : 0;
+      switch (itemID) {
+        case items.WOOD_PICKAXE:
+        case items.STONE_PICKAXE:
+        case items.IRON_PICKAXE:
+        case items.OBAMIUM_PICKAXE:
+          damage = 8;
+          break;
+        default:
+          damage = 3;
+          break;
+      }
+      this.damageIndicators.addIndicator(damage, { x: this.canvas.width/2, y: this.canvas.height/2 });
+      if (isDefined(this.world.getTree({ x: xPos, y: yPos }))) {
+        this.world.trees[`${xPos}|${yPos}`].hp -= damage;
+        if (this.world.trees[`${xPos}|${yPos}`].hp <= 0) {
+          this.world.addNewDrop({
+            id: items.WOOD_STUMP,
+            quantity: randomNumber(1, 6)
+          }, { x: xPos, y: yPos });
+          delete this.world.trees[`${xPos}|${yPos}`];
+        }
+      } else if (isDefined(this.world.getTree({ x: xPos, y: yPos - 1 }))) {
+        this.world.trees[`${xPos}|${yPos - 1}`].hp -= damage;
+        if (this.world.trees[`${xPos}|${yPos - 1}`].hp <= 0) {
+          this.world.addNewDrop({
+            id: items.WOOD_STUMP,
+            quantity: randomNumber(1, 6)
+          }, { x: xPos, y: yPos });
+          delete this.world.trees[`${xPos}|${yPos - 1}`];
+        }
+      }
+    }
   }
 
   private update(time: number): void {
     let deltaTime = (time - this.lastTimeStamp) / 10;
     let adjustedSpeed = PLAYER_SPEED * deltaTime;
     this.playerDirection = direction.None;
+    let cellPosition: point = {
+      x: Math.floor((this.position.x) / TILE_DIMENSION) + 8,
+      y: Math.floor((this.position.y) / TILE_DIMENSION) + 4
+    };
     if (this.player.hitting) {
-      adjustedSpeed = adjustedSpeed * 0.7;
+      adjustedSpeed = adjustedSpeed * 0.1;
     }
     if (this.keyboard.isKeyPressed("KeyW") && !this.checkWorldCollision(0, -adjustedSpeed)) {
       this.playerDirection = direction.Up;
@@ -115,9 +201,51 @@ export class Game {
       this.waterFrame = ++this.waterFrame % this.waterAnimation.length;
       this.lastWaterUpdate = time;
     }
+    let dropsOnPlayer = this.world.getDrops(cellPosition);
+    if (isDefined(dropsOnPlayer) && dropsOnPlayer.length !== 0) {
+      dropsOnPlayer.forEach(drop => {
+        this.world.pickUpDrop(drop);
+      });
+      this.world.removeDrops(cellPosition);
+    } 
     if (this.keyboard.isKeyPressed("Space")) {
-      this.player.hit(this.world.data.playerInventory[this.selectedItem]);
+      if (this.selectedItem !== -1) {
+        this.player.hit(this.itemsSprites[this.world.playerInventory[this.selectedItem].id], (dir: direction): void => {
+          switch (dir) {
+            case direction.Up:
+              this.dealDamage(0, -10);
+              break;
+            case direction.Down:
+              this.dealDamage(0, +10);
+              break;
+            case direction.Left:
+              this.dealDamage(-10, 0);
+              break;
+            case direction.Right:
+              this.dealDamage(+10, 0);
+              break;
+          }
+        });
+      } else {
+        this.player.hit(undefined, (dir: direction): void => {
+          switch (dir) {
+            case direction.Up:
+              this.dealDamage(0, -10);
+              break;
+            case direction.Down:
+              this.dealDamage(0, +10);
+              break;
+            case direction.Left:
+              this.dealDamage(-10, 0);
+              break;
+            case direction.Right:
+              this.dealDamage(+10, 0);
+              break;
+          }
+        });
+      }
     }
+    this.damageIndicators.update(deltaTime);
   }
 
   private draw(): void {
@@ -153,16 +281,19 @@ export class Game {
             );
           }
         }
-      let item = this.world.getDrop({ x: c, y: r });
-      if (item) {
-        this.ctx.drawImage(
-          this.itemsSprites[item.id],
-          Math.round(x),
-          Math.round(y),
-          TILE_DIMENSION/2,
-          TILE_DIMENSION/2,
-        );
-      }
+        let items = this.world.getDrops({ x: c, y: r });
+        if (isDefined(items) && items.length !== 0) {
+          items.forEach((item) => {
+            this.ctx.drawImage(
+              this.itemsSprites[item.id],
+              Math.round(x),
+              Math.round(y + this.dropAnimationOffset),
+              TILE_DIMENSION/2,
+              TILE_DIMENSION/2,
+            );
+            this.drawShadow(25 - this.dropAnimationOffset, { x: x + 17, y: y + 50 });
+          });
+        }
       }
     }
     this.player.draw(this.ctx);
@@ -192,6 +323,7 @@ export class Game {
         }
       }
     }
+    this.damageIndicators.draw(this.ctx);
     requestAnimationFrame((t) => {
       this.update(t);
       this.draw();
@@ -202,7 +334,7 @@ export class Game {
   private renderInventory(): void {
     let inventory = document.getElementById("item-container");
     inventory.innerHTML = "";
-    for (let i = 0; i < this.world.data.playerInventory.length; i++) {
+    for (let i = 0; i < this.world.playerInventory.length; i++) {
       if (this.selectedItem === i) {
         let itemSlot = document.createElement("div");
         itemSlot.style.justifyContent = "space-between";
@@ -214,13 +346,12 @@ export class Game {
         itemSlot.appendChild(selectedArrow.cloneNode());
         let itemContainer = document.createElement("div");
         itemContainer.className = "item-slot-container";
-        let itemIcon = document.createElement("img");
-        itemIcon.src = "/assets/items/wood_pickaxe.png";
+        let itemIcon = <HTMLImageElement>this.itemsSprites[this.world.playerInventory[i].id].cloneNode();
         itemIcon.classList.add("item-slot-icon");
         itemIcon.classList.add("px-rendering");
         itemContainer.appendChild(itemIcon);
         let itemText = document.createElement("div");
-        itemText.textContent = `${ITEM_NAMES[this.world.data.playerInventory[i].id]} x${this.world.data.playerInventory[i].quantity}`;
+        itemText.textContent = `${ITEM_NAMES[this.world.playerInventory[i].id]} x${this.world.playerInventory[i].quantity}`;
         itemText.className = "item-slot-text";
         itemContainer.appendChild(itemText);
         itemSlot.appendChild(itemContainer);
@@ -228,7 +359,7 @@ export class Game {
         itemSlot.appendChild(selectedArrow.cloneNode());
         inventory.appendChild(itemSlot);
         if (this.selectedItem !== -1) {
-          (document.getElementById("selectedItem") as HTMLImageElement).src = this.itemsSprites[this.world.data.playerInventory[i].id].src;
+          (document.getElementById("selectedItem") as HTMLImageElement).src = this.itemsSprites[this.world.playerInventory[i].id].src;
         } else {
           (document.getElementById("selectedItem") as HTMLImageElement).src = "/assets/fist.png";
         }
@@ -237,19 +368,27 @@ export class Game {
         itemSlot.className = "item-slot";
         let itemContainer = document.createElement("div");
         itemContainer.className = "item-slot-container";
-        let itemIcon = document.createElement("img");
-        itemIcon.src = "/assets/items/wood_pickaxe.png";
+        let itemIcon = <HTMLImageElement>this.itemsSprites[this.world.playerInventory[i].id].cloneNode();
         itemIcon.classList.add("item-slot-icon");
         itemIcon.classList.add("px-rendering");
         itemContainer.appendChild(itemIcon);
         let itemText = document.createElement("div");
-        itemText.textContent =  `${ITEM_NAMES[this.world.data.playerInventory[i].id]} x${this.world.data.playerInventory[i].quantity}`;
+        itemText.textContent =  `${ITEM_NAMES[this.world.playerInventory[i].id]} x${this.world.playerInventory[i].quantity}`;
         itemText.className = "item-slot-text";
         itemContainer.appendChild(itemText);
         itemSlot.appendChild(itemContainer);
         inventory.appendChild(itemSlot);
       }
     }
+  }
+
+  drawShadow(diameter: number, position: point): void {
+    this.ctx.save();
+    this.ctx.fillStyle = "rgba(153, 153, 153, 0.6)";
+    this.ctx.beginPath();
+    this.ctx.ellipse(position.x, position.y, diameter, 10, Math.PI, 0, 2 * Math.PI);
+    this.ctx.fill();
+    this.ctx.restore();
   }
 
   async run(): Promise<void> {
@@ -267,13 +406,16 @@ export class Game {
       this.usingInventory = !this.usingInventory;
     });
     this.keyboard.atKeyPressed("KeyQ", () => {
-      this.world.data.playerInventory.push({
+      this.world.pickUpDrop({
         id: 1,
         quantity: 1
       });
     });
     this.keyboard.atKeyPressed("ArrowDown", () => {
-      if (this.selectedItem === this.world.data.playerInventory.length - 1) {
+      if (this.selectedItem === -1) {
+        this.selectedItem = 0;
+      }
+      if (this.selectedItem === this.world.playerInventory.length - 1) {
         this.selectedItem = 0;
       } else {
         this.selectedItem += 1;
@@ -281,8 +423,8 @@ export class Game {
       this.renderInventory();
     });
     this.keyboard.atKeyPressed("ArrowUp", () => {
-      if (this.selectedItem === 0) {
-        this.selectedItem = this.world.data.playerInventory.length - 1;
+      if (this.selectedItem === 0 || this.selectedItem === -1) {
+        this.selectedItem = this.world.playerInventory.length - 1;
       } else {
         this.selectedItem -= 1;
       }

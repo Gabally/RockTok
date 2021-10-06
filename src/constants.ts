@@ -48,17 +48,22 @@ export const SHIRT_COLORS = [
     "#ebeb44"
 ]
 
-
 export enum items {
     WOOD_PICKAXE = 1,
     STONE_PICKAXE,
     IRON_PICKAXE,
-    OBAMIUM_PICKAXE
+    OBAMIUM_PICKAXE,
+    BEATING_STICK,
+    WOOD_STUMP,
+    ROCK,
 }
 
 export const ITEM_NAMES: { [index: number]: string } = {
     [items.WOOD_PICKAXE]: "Wood Pickaxe",
     [items.STONE_PICKAXE]: "Stone Pickaxe",
     [items.IRON_PICKAXE]: "Iron Pickaxe",
-    [items.OBAMIUM_PICKAXE]: "Supreme Obamium Pickaxe"
+    [items.OBAMIUM_PICKAXE]: "Supreme Obamium Pickaxe",
+    [items.BEATING_STICK]: "Wooden beating stick",
+    [items.WOOD_STUMP]: "Wood",
+    [items.ROCK]: "Rock"
 }

@@ -1,9 +1,11 @@
 import "./style.css";
 import "../assets/EarlyGameboyFont.css";
+import "../assets/KarmaticArcadeFont.css";
 import { Game } from "./Game";
 import { generateWorld, worldInterface } from "./Wolrd";
 import { KeyValueIDB } from "./KeyValueIDB";
 import { CharacterCreator } from "./CharacterCreator";
+import { isDefined } from "./utils";
 
 var game: Game;
 var db = new KeyValueIDB();
@@ -180,9 +182,9 @@ AddclickListener("startSingleplayer", async (): Promise<void> => {
 
 AddclickListener("newWorldBtn", async (): Promise<void> => {
     let worldName = await showInputDialog("New world name:");
-    if (worldName !== undefined && worldName.length !== 0) {
+    if (isDefined(worldName) && worldName.length !== 0) {
         let worlds = await db.getValue("worlds");
-        if (worlds[worldName] === undefined) {
+        if (!isDefined(worlds[worldName])) {
             worlds[worldName] = await generateWorld();
             await db.setValue("worlds", worlds);
         }
@@ -208,7 +210,7 @@ const updateWorldList = async (): Promise<void> => {
     let el: HTMLDivElement = <HTMLDivElement>document.getElementById("worlds");
     el.innerHTML = "";
     let worlds = await db.getValue("worlds");
-    if (worlds == undefined) {
+    if (!isDefined(worlds)) {
         worlds = {};
         db.setValue("worlds", {});
     }

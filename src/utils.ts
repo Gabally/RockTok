@@ -1,3 +1,4 @@
+
 export const loadImage = async (path: string): Promise<HTMLImageElement> => {
     return new Promise((resolve, reject) => {
         let img = new Image();
@@ -32,3 +33,7 @@ export const sleep = (time: number): Promise<void> => {
         setTimeout(() => resolve(), time);
     });
 }
+
+export const isDefined = (obj: any): boolean => {
+    return obj !== undefined && obj !== null;
+} 

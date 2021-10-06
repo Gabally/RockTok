@@ -3,7 +3,7 @@ import { point, direction } from "./Game";
 import { animation } from "./Game";
 import { generateCharacterSpritesheetsFromData } from "./CharacterCreator";
 import { characterData } from "./CharacterCreator";
-import { itemStack } from "./Wolrd";
+import { isDefined } from "./utils";
 
 export class Player {
     up: animation;
@@ -24,7 +24,7 @@ export class Player {
     character: characterData;
     hitting: boolean;
     lastDirection: direction;
-    attackItem: itemStack;
+    attackItem: HTMLImageElement;
 
     constructor(x: number, y: number, character: characterData) {
         this.position = { x: x, y: y};
@@ -57,7 +57,7 @@ export class Player {
         };
         this.hitUp = {
             frames: await splitter.split(spriteSheets.hitUp, 3, false),
-            deltaAnimation: 80
+            deltaAnimation: 120
         };
         this.hitLeft = {
             frames: await splitter.split(spriteSheets.hitSide, 4, false),
@@ -75,10 +75,34 @@ export class Player {
     }
 
     draw(ctx: CanvasRenderingContext2D) {
-        if (this.currentAnimation.frames[this.currentFrame] === undefined) {
+        if (!isDefined(this.currentAnimation.frames[this.currentFrame])) {
             this.currentFrame = 0;
         }
         ctx.drawImage(this.currentAnimation.frames[this.currentFrame], this.position.x-(this.width/2), this.position.y-(this.height/2), this.width, this.height);
+        if (this.hitting && this.attackItem !== undefined) {
+            switch(this.lastDirection) {
+                case direction.Up:
+                    ctx.save();
+                    ctx.setTransform(1, 0, 0, 1, this.position.x + 22, this.position.y + this.currentFrame - 6);
+                    ctx.rotate(Math.PI / 2);
+                    ctx.drawImage(this.attackItem, -this.attackItem.height / 2,  -this.attackItem.width / 2);
+                    ctx.restore();
+                    break;
+                case direction.Down:
+                    ctx.save();
+                    ctx.setTransform(1, 0, 0, 1, this.position.x - 19, this.position.y + this.currentFrame + 15);
+                    ctx.rotate(-Math.PI / 2);
+                    ctx.drawImage(this.attackItem, -this.attackItem.height / 2,  -this.attackItem.width / 2);
+                    ctx.restore();
+                    break;
+                case direction.Left:
+                    ctx.drawImage(this.attackItem, this.position.x - this.currentFrame - 26, this.position.y - 11);
+                    break;
+                case direction.Right:
+                    ctx.drawImage(this.attackItem, this.position.x + this.currentFrame - 5, this.position.y - 11);
+                    break;
+            }
+        }
     }
     
     update(time: number, dir: direction): void {
@@ -128,9 +152,10 @@ export class Player {
         }
     }
 
-    hit(item: itemStack): void {
+    hit(item: HTMLImageElement, callback: (dir: direction) => void): void {
         this.attackItem = item;
         if (!this.hitting) {
+            callback(this.lastDirection);
             this.hitting = true;
             this.currentFrame = 0;
         }
