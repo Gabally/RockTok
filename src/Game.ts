@@ -3,7 +3,7 @@ import { Player } from "./Player";
 import { worldInterface } from "./Wolrd";
 import { loadImage, isDefined, randomNumber } from "./utils";
 import { loadItems, loadTiles, loadWorldElements } from "./loaders";
-import { items, ITEM_NAMES, PLAYER_SPEED, TILE_DIMENSION } from "./constants";
+import { CRAFTING_RECIPES, items, ITEM_NAMES, PLAYER_SPEED, TILE_DIMENSION } from "./constants";
 import { characterData } from "./CharacterCreator";
 import { DamageIndicatorsSystem } from "./DamageIndicators";
 
@@ -36,6 +36,7 @@ export class Game {
   tiles: Record<string, HTMLImageElement>;
   worldElements: Record<string, HTMLImageElement>;
   itemsSprites:  Record<string, HTMLImageElement>;
+  selectedArrow: HTMLImageElement;
   position: point;
   waterFrame: number;
   lastWaterUpdate: number;
@@ -43,7 +44,9 @@ export class Game {
   waterAnimation: HTMLImageElement[];
   lastTimeStamp: number;
   usingInventory: boolean;
+  usingCraftingMenu: boolean;
   selectedItem: number;
+  selectedRecipe: number
   damageIndicators: DamageIndicatorsSystem;
   dropAnimationOffset: number;
   dropAnimationCounter: number;
@@ -68,17 +71,19 @@ export class Game {
     this.lastTimeStamp = 0;
     this.dropAnimationCounter = 0;
     this.dropAnimationOffset = 0;
+    this.selectedRecipe = 0;
     setInterval(() => {
       this.dropAnimationOffset = Math.abs((this.dropAnimationCounter+=1)%20 - 10)
     }, 100);
     this.usingInventory = false;
+    this.usingCraftingMenu = false;
     this.selectedItem = -1;
     this.damageIndicators = new DamageIndicatorsSystem();
   }
 
   private resizeCanvas(): void {
     let newWidth = window.innerWidth - 10;
-    let newHeight = window.innerHeight - 10;
+    let newHeight = window.innerHeight * 0.9;
     let newWidthToHeight = newWidth / newHeight;
     if (newWidthToHeight > this.ratio) {
       newWidth = newHeight * this.ratio;
@@ -206,6 +211,7 @@ export class Game {
       dropsOnPlayer.forEach(drop => {
         this.world.pickUpDrop(drop);
       });
+      this.renderInventory();
       this.world.removeDrops(cellPosition);
     } 
     if (this.keyboard.isKeyPressed("Space")) {
@@ -339,8 +345,7 @@ export class Game {
         let itemSlot = document.createElement("div");
         itemSlot.style.justifyContent = "space-between";
         itemSlot.className = "item-slot";
-        let selectedArrow = document.createElement("img");
-        selectedArrow.src = "/assets/selected_arrow.png";
+        let selectedArrow = <HTMLImageElement>this.selectedArrow.cloneNode();
         selectedArrow.classList.add("s-arrow");
         selectedArrow.classList.add("px-rendering");
         itemSlot.appendChild(selectedArrow.cloneNode());
@@ -382,6 +387,31 @@ export class Game {
     }
   }
 
+  private renderCraftingMenu(): void {
+    let craftablesItemsList = document.getElementById("craftable-items-list");
+    craftablesItemsList.innerHTML = "";
+    let selectedArrow = <HTMLImageElement>this.selectedArrow.cloneNode();
+    selectedArrow.classList.add("s-arrow");
+    selectedArrow.classList.add("px-rendering");
+    Object.keys(CRAFTING_RECIPES).forEach((recipe: string, index: number) => {
+      let container = document.createElement("div");
+      container.className = "craftable-item";
+      let itemIcon = <HTMLImageElement>this.itemsSprites[recipe].cloneNode();
+      if (this.selectedRecipe === index) {
+        container.appendChild(selectedArrow.cloneNode());
+      }
+      container.appendChild(itemIcon);
+      let itemText = document.createElement("div");
+      itemText.textContent = ITEM_NAMES[parseInt(recipe)];
+      container.appendChild(itemText);
+      if (this.selectedRecipe === index) {
+        selectedArrow.classList.add("flip");
+        container.appendChild(selectedArrow.cloneNode());
+      }
+      craftablesItemsList.appendChild(container);
+    });
+  }
+
   drawShadow(diameter: number, position: point): void {
     this.ctx.save();
     this.ctx.fillStyle = "rgba(153, 153, 153, 0.6)";
@@ -395,40 +425,67 @@ export class Game {
     this.tiles = await loadTiles();
     this.worldElements = await loadWorldElements();
     this.itemsSprites = await loadItems();
+    this.selectedArrow = await loadImage("/assets/selected_arrow.png");
     await this.player.init();
     for (let i = 1; i <= 5; i++) {
       this.waterAnimation.push(await loadImage(`/assets/tiles/water/${i}.png`));
     }
     this.keyboard.startListening();
-    this.keyboard.atKeyPressed("KeyE", () => {
-      this.renderInventory();
-      this.usingInventory ? document.getElementById("inventory").style.display = "none" : document.getElementById("inventory").style.display = "block";
-      this.usingInventory = !this.usingInventory;
-    });
     this.keyboard.atKeyPressed("KeyQ", () => {
       this.world.pickUpDrop({
         id: 1,
         quantity: 1
       });
+      this.renderInventory();
     });
     this.keyboard.atKeyPressed("ArrowDown", () => {
-      if (this.selectedItem === -1) {
-        this.selectedItem = 0;
+      if (this.usingCraftingMenu) {
+        if (this.selectedRecipe === Object.keys(CRAFTING_RECIPES).length - 1) {
+          this.selectedRecipe = 0;
+        } else {
+          this.selectedRecipe += 1;
+        }
+        this.renderCraftingMenu();
+      } else if (this.world.playerInventory.length !== 0) {
+        if (this.selectedItem === this.world.playerInventory.length - 1) {
+          this.selectedItem = 0;
+        } else {
+          this.selectedItem += 1;
+        }
+        this.renderInventory();
       }
-      if (this.selectedItem === this.world.playerInventory.length - 1) {
-        this.selectedItem = 0;
-      } else {
-        this.selectedItem += 1;
-      }
-      this.renderInventory();
     });
     this.keyboard.atKeyPressed("ArrowUp", () => {
-      if (this.selectedItem === 0 || this.selectedItem === -1) {
-        this.selectedItem = this.world.playerInventory.length - 1;
-      } else {
-        this.selectedItem -= 1;
+      if (this.usingCraftingMenu) {
+        if (this.selectedRecipe === 0) {
+          this.selectedRecipe = Object.keys(CRAFTING_RECIPES).length - 1;
+        } else {
+          this.selectedRecipe -= 1;
+        }
+        this.renderCraftingMenu();
+      } else if (this.world.playerInventory.length !== 0) {
+        if (this.selectedItem === 0 || this.selectedItem === -1) {
+          this.selectedItem = this.world.playerInventory.length - 1;
+        } else {
+          this.selectedItem -= 1;
+        }
+        this.renderInventory();
       }
-      this.renderInventory();
+    });
+    this.keyboard.atKeyPressed("KeyC", () => {
+      if (!this.usingInventory) {
+        this.selectedRecipe = 0;
+        this.renderCraftingMenu();
+        this.usingCraftingMenu ? document.getElementById("crafting-menu").style.display = "none" : document.getElementById("crafting-menu").style.display = "flex";
+        this.usingCraftingMenu = !this.usingCraftingMenu;  
+      }
+    });
+    this.keyboard.atKeyPressed("KeyE", () => {
+      if (!this.usingCraftingMenu) {
+        this.renderInventory();
+        this.usingInventory ? document.getElementById("inventory").style.display = "none" : document.getElementById("inventory").style.display = "block";
+        this.usingInventory = !this.usingInventory;
+      }
     });
     this.renderInventory();
     requestAnimationFrame((t) => {

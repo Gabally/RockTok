@@ -1,3 +1,5 @@
+import { itemStack } from "./Wolrd";
+
 export const MAP_WIDTH = 600;
 
 export const MAP_HEIGHT = 400;
@@ -66,4 +68,11 @@ export const ITEM_NAMES: { [index: number]: string } = {
     [items.BEATING_STICK]: "Wooden beating stick",
     [items.WOOD_STUMP]: "Wood",
     [items.ROCK]: "Rock"
+}
+
+export const CRAFTING_RECIPES: { [itemID: number]: itemStack[] } = {
+    [items.WOOD_PICKAXE]: [{ id: items.WOOD_STUMP, quantity: 3 }],
+    [items.BEATING_STICK]: [{ id: items.WOOD_STUMP, quantity: 1 }],
+    [items.STONE_PICKAXE]: [{ id: items.WOOD_STUMP, quantity: 1 }, { id: items.ROCK, quantity: 2 }],
+    [items.IRON_PICKAXE]: [{ id: items.WOOD_STUMP, quantity: 1 }, { id: items.ROCK, quantity: 2 }]
 }

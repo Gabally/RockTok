@@ -1,5 +1,8 @@
 {
     "version": "0.0.1",
+    "author": "Gabriele Morisano",
+    "license": "MIT",
+    "description": "Sandbox survival game",
     "scripts": {
         "dev": "vite",
         "build": "tsc && vite build",

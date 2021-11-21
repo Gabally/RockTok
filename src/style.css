@@ -75,7 +75,7 @@ body {
     width: 70vw;
     height: 70vh;
     font-size: 27px;
-    display: flex;
+    display: block;
     flex-direction: column;
 }
 
@@ -134,9 +134,6 @@ body {
 
 #game-ui {
     color: black;
-    position: fixed;
-    bottom: 0px;
-    right: 0px;
     background: url("/assets/rockTexture.png");
     background-size: 128px;
     image-rendering: pixelated;
@@ -160,9 +157,9 @@ body {
     background: rgba(99, 99, 99, 0.603);
 }
 
-#inventory {
+.in-game-menu {
     position: absolute;
-    width: 50vw;
+    width: 60vw;
     height: 70vh;
     z-index: 99999;
     left: 50%;
@@ -176,7 +173,7 @@ body {
     scrollbar-width: none;
 }
 
-#inventory::-webkit-scrollbar {
+.in-game-menu::-webkit-scrollbar {
     display: none;
 }
 
@@ -272,4 +269,47 @@ body {
 
 #characterDisplay {
     width: 20vw;
+}
+
+#crafting-menu {
+    display: none;
+}
+
+.craftable-items {
+    width: 40%;
+    text-align: center;
+    border-right: 2px solid black;
+    overflow-y: scroll;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.craftable-items::-webkit-scrollbar {
+    display: none;
+}
+
+#crafting-recipe {
+    padding: 10px;
+    width: 60%;
+    font-size: 15px;
+}
+
+.craftable-item>img {
+    margin-right: 10px;
+}
+
+.craftable-item {
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+    margin-top: 15px;
+    padding: 3px;
+}
+
+#game {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
 }

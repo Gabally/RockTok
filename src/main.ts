@@ -20,7 +20,13 @@ const uiElements: Record<string, string> = {
 const resetUI = (): void => {
     Object.keys(uiElements).forEach(id => {
         let el = document.getElementById(uiElements[id]);
-        //if (!el.dataset.display) { el.dataset.display = getComputedStyle(el).getPropertyValue("display"); }
+        if (!el.dataset.display) {
+            if (el.style.display) {
+                el.style.display = el.style.display;
+            } else {
+                el.dataset.display = getComputedStyle(el).getPropertyValue("display");
+            }
+        }
         el.style.display = "none";
     });
 };
@@ -32,7 +38,11 @@ const AddclickListener = (id: string, cb: () => void): void => {
 
 const Show = (id: string): void => {
     let el = document.getElementById(id);
-    el.style.display = "block";
+    if (el.dataset.display) {
+        el.style.display = el.dataset.display;
+    } else {
+        el.style.display = "block";
+    }
 };
 
 const removeEventListeners = (id: string) => {
