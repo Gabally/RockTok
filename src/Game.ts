@@ -35,7 +35,7 @@ export class Game {
   world: worldInterface;
   tiles: Record<string, HTMLImageElement>;
   worldElements: Record<string, HTMLImageElement>;
-  itemsSprites:  Record<string, HTMLImageElement>;
+  itemsSprites: Record<string, HTMLImageElement>;
   position: point;
   waterFrame: number;
   lastWaterUpdate: number;
@@ -47,6 +47,8 @@ export class Game {
   damageIndicators: DamageIndicatorsSystem;
   dropAnimationOffset: number;
   dropAnimationCounter: number;
+  running: Boolean;
+  pauseMenu: HTMLElement;
 
   constructor(canvas: string, world: worldInterface, character: characterData) {
     this.world = world;
@@ -69,7 +71,7 @@ export class Game {
     this.dropAnimationCounter = 0;
     this.dropAnimationOffset = 0;
     setInterval(() => {
-      this.dropAnimationOffset = Math.abs((this.dropAnimationCounter+=1)%20 - 10)
+      this.dropAnimationOffset = Math.abs((this.dropAnimationCounter += 1) % 20 - 10)
     }, 100);
     this.usingInventory = false;
     this.selectedItem = -1;
@@ -92,22 +94,22 @@ export class Game {
   }
 
   checkWorldCollision(offsetX: number, offsetY: number): boolean {
-    let xPos =  Math.floor((this.position.x + offsetX) / TILE_DIMENSION) + 8;
+    let xPos = Math.floor((this.position.x + offsetX) / TILE_DIMENSION) + 8;
     let yPos = Math.floor((this.position.y + offsetY) / TILE_DIMENSION) + 4;
-    return isDefined(this.world.getRock({ x: xPos, y: yPos })) || 
-    isDefined(this.world.getTree({ x: xPos, y: yPos })) ||
-    isDefined(this.world.getTree({ x: xPos, y: yPos - 1 }));
+    return isDefined(this.world.getRock({ x: xPos, y: yPos })) ||
+      isDefined(this.world.getTree({ x: xPos, y: yPos })) ||
+      isDefined(this.world.getTree({ x: xPos, y: yPos - 1 }));
   }
 
   dealDamage(offsetX: number, offsetY: number): void {
-    let xPos =  Math.floor((this.position.x + offsetX) / TILE_DIMENSION) + 8;
+    let xPos = Math.floor((this.position.x + offsetX) / TILE_DIMENSION) + 8;
     let yPos = Math.floor((this.position.y + offsetY) / TILE_DIMENSION) + 4;
     if (isDefined(this.world.getRock({ x: xPos, y: yPos }))) {
       let damage = 0;
       let itemID = this.selectedItem !== -1 ? this.world.playerInventory[this.selectedItem].id : 0;
       switch (itemID) {
         case items.WOOD_PICKAXE:
-          damage = 15;  
+          damage = 15;
           break;
         case items.STONE_PICKAXE:
           damage = 25;
@@ -122,7 +124,7 @@ export class Game {
           damage = 3;
           break;
       }
-      this.damageIndicators.addIndicator(damage, { x: this.canvas.width/2, y: this.canvas.height/2 });
+      this.damageIndicators.addIndicator(damage, { x: this.canvas.width / 2, y: this.canvas.height / 2 });
       this.world.rocks[`${xPos}|${yPos}`].hp -= damage;
       if (this.world.rocks[`${xPos}|${yPos}`].hp <= 0) {
         if (this.world.rocks[`${xPos}|${yPos}`].hp <= 0) {
@@ -148,7 +150,7 @@ export class Game {
           damage = 3;
           break;
       }
-      this.damageIndicators.addIndicator(damage, { x: this.canvas.width/2, y: this.canvas.height/2 });
+      this.damageIndicators.addIndicator(damage, { x: this.canvas.width / 2, y: this.canvas.height / 2 });
       if (isDefined(this.world.getTree({ x: xPos, y: yPos }))) {
         this.world.trees[`${xPos}|${yPos}`].hp -= damage;
         if (this.world.trees[`${xPos}|${yPos}`].hp <= 0) {
@@ -207,7 +209,7 @@ export class Game {
         this.world.pickUpDrop(drop);
       });
       this.world.removeDrops(cellPosition);
-    } 
+    }
     if (this.keyboard.isKeyPressed("Space")) {
       if (this.selectedItem !== -1) {
         this.player.hit(this.itemsSprites[this.world.playerInventory[this.selectedItem].id], (dir: direction): void => {
@@ -288,8 +290,8 @@ export class Game {
               this.itemsSprites[item.id],
               Math.round(x),
               Math.round(y + this.dropAnimationOffset),
-              TILE_DIMENSION/2,
-              TILE_DIMENSION/2,
+              TILE_DIMENSION / 2,
+              TILE_DIMENSION / 2,
             );
             this.drawShadow(25 - this.dropAnimationOffset, { x: x + 17, y: y + 50 });
           });
@@ -324,11 +326,6 @@ export class Game {
       }
     }
     this.damageIndicators.draw(this.ctx);
-    requestAnimationFrame((t) => {
-      this.update(t);
-      this.draw();
-      this.lastTimeStamp = t;
-    });
   }
 
   private renderInventory(): void {
@@ -373,7 +370,7 @@ export class Game {
         itemIcon.classList.add("px-rendering");
         itemContainer.appendChild(itemIcon);
         let itemText = document.createElement("div");
-        itemText.textContent =  `${ITEM_NAMES[this.world.playerInventory[i].id]} x${this.world.playerInventory[i].quantity}`;
+        itemText.textContent = `${ITEM_NAMES[this.world.playerInventory[i].id]} x${this.world.playerInventory[i].quantity}`;
         itemText.className = "item-slot-text";
         itemContainer.appendChild(itemText);
         itemSlot.appendChild(itemContainer);
@@ -391,7 +388,29 @@ export class Game {
     this.ctx.restore();
   }
 
+  advanceFrame() {
+    requestAnimationFrame((t) => {
+      if (this.running) {
+        this.update(t);
+        this.draw();
+      }
+      this.lastTimeStamp = t;
+      this.advanceFrame();
+    });
+  }
+
+  pause() {
+    this.running = false;
+    this.pauseMenu.style.display = "flex";
+  }
+  
+  resume() {
+    this.running = true;
+    this.pauseMenu.style.display = "none";
+  }
+
   async run(): Promise<void> {
+    this.running = true;
     this.tiles = await loadTiles();
     this.worldElements = await loadWorldElements();
     this.itemsSprites = await loadItems();
@@ -399,6 +418,7 @@ export class Game {
     for (let i = 1; i <= 5; i++) {
       this.waterAnimation.push(await loadImage(`/assets/tiles/water/${i}.png`));
     }
+    this.pauseMenu = document.getElementById("pauseMenu");
     this.keyboard.startListening();
     this.keyboard.atKeyPressed("KeyE", () => {
       this.renderInventory();
@@ -410,6 +430,9 @@ export class Game {
         id: 1,
         quantity: 1
       });
+    });
+    this.keyboard.atKeyPressed("Escape", () => {
+      this.running ? this.pause() : this.resume();
     });
     this.keyboard.atKeyPressed("ArrowDown", () => {
       if (this.selectedItem === -1) {
@@ -431,10 +454,6 @@ export class Game {
       this.renderInventory();
     });
     this.renderInventory();
-    requestAnimationFrame((t) => {
-      this.update(t);
-      this.draw();
-      this.lastTimeStamp = t;
-    });
+    this.advanceFrame();
   }
 }

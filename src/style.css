@@ -41,6 +41,7 @@ body {
     -moz-osx-font-smoothing: grayscale;
     text-align: center;
     color: #2c3e50;
+    height: 100vh;
 }
 
 .m-btn {
@@ -272,4 +273,15 @@ body {
 
 #characterDisplay {
     width: 20vw;
+}
+
+#pauseMenu {
+    position: absolute;
+    z-index: 999999;
+    left: 0px;
+    right: 0px;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(48, 47, 47, 0.678);
+    display: none;
 }
